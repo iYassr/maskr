@@ -11,7 +11,18 @@
     "preview": "vite preview",
     "electron:dev": "vite build && electron .",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build:vite && npx playwright test",
+    "test:ci": "npm run build:vite && xvfb-run --auto-servernum -- npx playwright test",
+    "test:headed": "npm run build:vite && npx playwright test --headed",
+    "test:debug": "npm run build:vite && npx playwright test --debug",
+    "test:ui": "npm run build:vite && npx playwright test --ui",
+    "test:file-uploader": "npm run build:vite && npx playwright test file-uploader",
+    "test:review-panel": "npm run build:vite && npx playwright test review-panel",
+    "test:config-modal": "npm run build:vite && npx playwright test config-modal",
+    "test:detection": "npm run build:vite && npx playwright test detection",
+    "test:workflows": "npm run build:vite && npx playwright test workflows",
+    "test:report": "npx playwright show-report"
   },
   "keywords": [
     "electron",
@@ -28,6 +39,7 @@
   "license": "MIT",
   "dependencies": {
     "compromise": "^14.14.4",
+    "daisyui": "^5.5.14",
     "docx": "^9.5.1",
     "electron-store": "^11.0.0",
     "exceljs": "^4.4.0",
@@ -44,6 +56,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",
+    "@playwright/test": "^1.57.0",
     "@tailwindcss/vite": "^4.1.10",
     "@types/node": "^22.15.29",
     "@types/react": "^19.1.6",
@@ -52,10 +65,12 @@
     "autoprefixer": "^10.4.21",
     "electron": "^35.1.5",
     "electron-builder": "^26.0.12",
+    "electron-playwright-helpers": "^2.0.1",
     "eslint": "^9.28.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.2.0",
+    "playwright": "^1.57.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.10",
     "typescript": "~5.8.3",

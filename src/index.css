@@ -1,6 +1,86 @@
 @import "tailwindcss";
-@plugin "daisyui" {
-  themes: dark --default;
+@plugin "daisyui";
+
+/* Custom high-contrast dark theme for DocSanitizer */
+@plugin "daisyui/theme" {
+  name: "sanitizer";
+  default: true;
+  prefersdark: true;
+  color-scheme: dark;
+
+  /* Deep dark backgrounds - not grey, true dark */
+  --color-base-100: oklch(12% 0.02 250);
+  --color-base-200: oklch(16% 0.02 250);
+  --color-base-300: oklch(22% 0.02 250);
+
+  /* High contrast text - crisp white, not grey */
+  --color-base-content: oklch(95% 0.01 250);
+
+  /* Cyan primary - digital, secure feel */
+  --color-primary: oklch(70% 0.18 195);
+  --color-primary-content: oklch(10% 0.02 195);
+
+  /* Purple secondary - technical, modern */
+  --color-secondary: oklch(65% 0.2 280);
+  --color-secondary-content: oklch(95% 0.01 280);
+
+  /* Teal accent */
+  --color-accent: oklch(70% 0.15 175);
+  --color-accent-content: oklch(10% 0.02 175);
+
+  /* Neutral - readable grey, not washed out */
+  --color-neutral: oklch(35% 0.02 250);
+  --color-neutral-content: oklch(75% 0.01 250);
+
+  /* Semantic colors - vibrant and distinct */
+  --color-info: oklch(65% 0.2 230);
+  --color-info-content: oklch(95% 0.01 230);
+
+  --color-success: oklch(65% 0.2 145);
+  --color-success-content: oklch(10% 0.02 145);
+
+  --color-warning: oklch(75% 0.18 70);
+  --color-warning-content: oklch(15% 0.05 70);
+
+  --color-error: oklch(65% 0.25 25);
+  --color-error-content: oklch(95% 0.01 25);
+
+  /* Refined radii */
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.75rem;
+
+  /* Generous sizing for better spacing */
+  --size-selector: 0.3125rem;
+  --size-field: 0.3125rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+/* Global spacing improvements */
+.btn {
+  @apply px-5 py-2.5;
+}
+
+.btn-sm {
+  @apply px-4 py-2;
+}
+
+.card-body {
+  @apply p-6;
+}
+
+.badge {
+  @apply px-3 py-1;
+}
+
+.input, .textarea, .select {
+  @apply px-4 py-3;
+}
+
+.alert {
+  @apply p-4 gap-3;
 }
 
 * {
@@ -29,25 +109,25 @@ body {
   -webkit-app-region: no-drag;
 }
 
-/* Detection highlight colors */
+/* Detection highlight colors - using theme semantic colors */
 .highlight-pii {
-  @apply bg-error/20 border-b-2 border-error rounded-sm px-0.5;
+  @apply bg-error/25 border-b-2 border-error rounded-sm px-1;
 }
 
 .highlight-company {
-  @apply bg-info/20 border-b-2 border-info rounded-sm px-0.5;
+  @apply bg-info/25 border-b-2 border-info rounded-sm px-1;
 }
 
 .highlight-financial {
-  @apply bg-success/20 border-b-2 border-success rounded-sm px-0.5;
+  @apply bg-success/25 border-b-2 border-success rounded-sm px-1;
 }
 
 .highlight-technical {
-  @apply bg-secondary/20 border-b-2 border-secondary rounded-sm px-0.5;
+  @apply bg-secondary/25 border-b-2 border-secondary rounded-sm px-1;
 }
 
 .highlight-custom {
-  @apply bg-warning/20 border-b-2 border-warning rounded-sm px-0.5;
+  @apply bg-warning/25 border-b-2 border-warning rounded-sm px-1;
 }
 
 /* Animations */

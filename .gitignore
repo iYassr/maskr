@@ -30,6 +30,9 @@ yarn-error.log*
 
 # Testing
 coverage/
+test-results/
+playwright-report/
+playwright/.cache/
 
 # Electron builder
 *.dmg
