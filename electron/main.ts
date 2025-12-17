@@ -15,6 +15,17 @@ import {
   combineOCRResults,
   isValidImage
 } from './services/ocr.js'
+import { createApplicationMenu } from './menu.js'
+import {
+  getAllProfiles,
+  getProfile,
+  getActiveProfile,
+  setActiveProfile,
+  saveProfile,
+  deleteProfile,
+  createProfile
+} from './services/profiles.js'
+import type { ConfigProfile } from './services/profiles.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -41,6 +52,9 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show()
   })
+
+  // Set up application menu
+  createApplicationMenu(mainWindow)
 
   if (VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(VITE_DEV_SERVER_URL)
@@ -305,3 +319,33 @@ ipcMain.handle(
     }
   }
 )
+
+// Profile management
+ipcMain.handle('profiles:getAll', () => {
+  return getAllProfiles()
+})
+
+ipcMain.handle('profiles:get', (_event, id: string) => {
+  return getProfile(id)
+})
+
+ipcMain.handle('profiles:getActive', () => {
+  return getActiveProfile()
+})
+
+ipcMain.handle('profiles:setActive', (_event, id: string) => {
+  return setActiveProfile(id)
+})
+
+ipcMain.handle('profiles:save', (_event, profile: ConfigProfile) => {
+  saveProfile(profile)
+  return true
+})
+
+ipcMain.handle('profiles:delete', (_event, id: string) => {
+  return deleteProfile(id)
+})
+
+ipcMain.handle('profiles:create', (_event, name: string, config: ConfigProfile['config']) => {
+  return createProfile(name, config)
+})

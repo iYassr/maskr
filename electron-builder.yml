@@ -1,6 +1,6 @@
 appId: com.docsanitizer.app
 productName: DocSanitizer
-copyright: Copyright © 2024
+copyright: Copyright © 2025
 
 directories:
   output: release
@@ -10,6 +10,12 @@ files:
   - dist/**/*
   - dist-electron/**/*
   - package.json
+  - node_modules/**/*
+
+asarUnpack:
+  - node_modules/sharp/**/*
+  - node_modules/tesseract.js/**/*
+  - node_modules/tesseract.js-core/**/*
 
 mac:
   category: public.app-category.productivity
@@ -46,3 +52,7 @@ dmg:
       y: 220
       type: link
       path: /Applications
+
+extraResources:
+  - from: node_modules/tesseract.js-core/tesseract-core.wasm.js
+    to: tesseract-core.wasm.js

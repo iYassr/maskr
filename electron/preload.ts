@@ -64,6 +64,22 @@ export interface OCRBatchResult {
   error?: string
 }
 
+export interface ConfigProfile {
+  id: string
+  name: string
+  config: {
+    companyName?: string
+    aliases?: string[]
+    customKeywords?: string[]
+    enabledCategories: string[]
+    maskingStyle: 'brackets' | 'redacted' | 'custom'
+    customMaskTemplate?: string
+    confidenceThreshold: number
+    detectNames: boolean
+    detectOrganizations: boolean
+  }
+}
+
 const api = {
   // File operations
   openFile: (): Promise<FileData | null> => ipcRenderer.invoke('dialog:openFile'),
@@ -92,11 +108,46 @@ const api = {
   ocrExtractTextBatch: (imageBuffersBase64: string[], language?: string): Promise<OCRBatchResult> =>
     ipcRenderer.invoke('ocr:extractTextBatch', imageBuffersBase64, language),
 
+  // Profile management
+  profilesGetAll: (): Promise<ConfigProfile[]> => ipcRenderer.invoke('profiles:getAll'),
+  profilesGet: (id: string): Promise<ConfigProfile | undefined> => ipcRenderer.invoke('profiles:get', id),
+  profilesGetActive: (): Promise<ConfigProfile> => ipcRenderer.invoke('profiles:getActive'),
+  profilesSetActive: (id: string): Promise<boolean> => ipcRenderer.invoke('profiles:setActive', id),
+  profilesSave: (profile: ConfigProfile): Promise<boolean> => ipcRenderer.invoke('profiles:save', profile),
+  profilesDelete: (id: string): Promise<boolean> => ipcRenderer.invoke('profiles:delete', id),
+  profilesCreate: (name: string, config: ConfigProfile['config']): Promise<ConfigProfile> =>
+    ipcRenderer.invoke('profiles:create', name, config),
+
   // App info
   getVersion: (): Promise<string> => ipcRenderer.invoke('app:getVersion'),
 
   // Platform info
-  platform: process.platform
+  platform: process.platform,
+
+  // Menu event listeners
+  onMenuEvent: (channel: string, callback: (...args: unknown[]) => void) => {
+    const validChannels = [
+      'menu:openFile',
+      'menu:export',
+      'menu:exportAnnotated',
+      'menu:preferences',
+      'menu:selectAllDetections',
+      'menu:deselectAllDetections',
+      'menu:showOriginal',
+      'menu:showSanitized',
+      'menu:sideBySide',
+      'menu:loadProfile',
+      'menu:saveProfile',
+      'menu:manageProfiles'
+    ]
+    if (validChannels.includes(channel)) {
+      ipcRenderer.on(channel, (_event, ...args) => callback(...args))
+    }
+  },
+
+  removeMenuListener: (channel: string) => {
+    ipcRenderer.removeAllListeners(channel)
+  }
 }
 
 contextBridge.exposeInMainWorld('api', api)

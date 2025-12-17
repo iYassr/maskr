@@ -73,6 +73,22 @@ interface OCRBatchResult {
   error?: string
 }
 
+interface ConfigProfile {
+  id: string
+  name: string
+  config: {
+    companyName?: string
+    aliases?: string[]
+    customKeywords?: string[]
+    enabledCategories: string[]
+    maskingStyle: 'brackets' | 'redacted' | 'custom'
+    customMaskTemplate?: string
+    confidenceThreshold: number
+    detectNames: boolean
+    detectOrganizations: boolean
+  }
+}
+
 interface Window {
   api: {
     openFile: () => Promise<FileData | null>
@@ -83,7 +99,16 @@ interface Window {
     extractEntities: (text: string) => Promise<NERResult>
     ocrExtractText: (imageBufferBase64: string, language?: string) => Promise<OCRResult>
     ocrExtractTextBatch: (imageBuffersBase64: string[], language?: string) => Promise<OCRBatchResult>
+    profilesGetAll: () => Promise<ConfigProfile[]>
+    profilesGet: (id: string) => Promise<ConfigProfile | undefined>
+    profilesGetActive: () => Promise<ConfigProfile>
+    profilesSetActive: (id: string) => Promise<boolean>
+    profilesSave: (profile: ConfigProfile) => Promise<boolean>
+    profilesDelete: (id: string) => Promise<boolean>
+    profilesCreate: (name: string, config: ConfigProfile['config']) => Promise<ConfigProfile>
     getVersion: () => Promise<string>
     platform: NodeJS.Platform
+    onMenuEvent: (channel: string, callback: (...args: unknown[]) => void) => void
+    removeMenuListener: (channel: string) => void
   }
 }
