@@ -1,6 +1,6 @@
 export interface NEREntity {
   text: string
-  type: 'person' | 'money' | 'phone' | 'email' | 'ip'
+  type: 'person' | 'financial' | 'credit_card' | 'iban' | 'phone' | 'email' | 'ip'
   start: number
   end: number
   confidence?: number
@@ -46,10 +46,16 @@ export function extractEntities(text: string, userCustomNames?: string[]): NEREn
   // 1. ONLY detect custom user-defined names (no automatic name detection)
   detectCustomNames(text, addEntity)
 
-  // 2. Extract money/currency - ONLY with explicit currency symbols
-  detectMoneyWithSymbols(text, addEntity)
+  // 2. Extract financial amounts - ONLY with explicit currency symbols
+  detectFinancialAmounts(text, addEntity)
 
-  // 3. Extract IP addresses
+  // 3. Extract credit card numbers (with Luhn validation)
+  detectCreditCards(text, addEntity)
+
+  // 4. Extract IBAN numbers (with structure validation)
+  detectIBANs(text, addEntity)
+
+  // 5. Extract IP addresses
   detectIPAddresses(text, addEntity)
 
   // Deduplicate entities (same position)
@@ -64,13 +70,13 @@ export function extractEntities(text: string, userCustomNames?: string[]): NEREn
   return uniqueEntities.sort((a, b) => a.start - b.start)
 }
 
-// Detect money ONLY when it has explicit currency symbols
-function detectMoneyWithSymbols(
+// Detect financial amounts ONLY when they have explicit currency symbols
+function detectFinancialAmounts(
   text: string,
   addEntity: (entity: NEREntity) => void
 ): void {
   // Currency patterns that require explicit symbols
-  const moneyPatterns = [
+  const currencyPatterns = [
     // Dollar: $100, $1,000.00, $1.5M, $1.5 million
     /\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi,
     // Euro: €100, 100€, EUR 100
@@ -95,17 +101,164 @@ function detectMoneyWithSymbols(
     /\d+(?:,\d{3})*(?:\.\d{1,2})?\s*(?:dollars?|euros?|pounds?|riyals?|dirhams?|yen|rupees?)(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi
   ]
 
-  for (const pattern of moneyPatterns) {
+  for (const pattern of currencyPatterns) {
     pattern.lastIndex = 0
     let match: RegExpExecArray | null
     while ((match = pattern.exec(text)) !== null) {
       addEntity({
         text: match[0],
-        type: 'money',
+        type: 'financial',
         start: match.index,
         end: match.index + match[0].length,
         confidence: 95
       })
+    }
+  }
+}
+
+// Luhn algorithm to validate credit card numbers
+function isValidLuhn(cardNumber: string): boolean {
+  const digits = cardNumber.replace(/\D/g, '')
+  if (digits.length < 13 || digits.length > 19) return false
+
+  let sum = 0
+  let isEven = false
+
+  for (let i = digits.length - 1; i >= 0; i--) {
+    let digit = parseInt(digits[i], 10)
+
+    if (isEven) {
+      digit *= 2
+      if (digit > 9) digit -= 9
+    }
+
+    sum += digit
+    isEven = !isEven
+  }
+
+  return sum % 10 === 0
+}
+
+// Detect credit card numbers with Luhn validation
+function detectCreditCards(
+  text: string,
+  addEntity: (entity: NEREntity) => void
+): void {
+  // Credit card patterns (various formats with spaces, dashes, or no separators)
+  const cardPatterns = [
+    // 16 digits with spaces: 4111 1111 1111 1111
+    /\b\d{4}[\s]\d{4}[\s]\d{4}[\s]\d{4}\b/g,
+    // 16 digits with dashes: 4111-1111-1111-1111
+    /\b\d{4}[-]\d{4}[-]\d{4}[-]\d{4}\b/g,
+    // 16 digits continuous: 4111111111111111
+    /\b\d{16}\b/g,
+    // 15 digits (Amex): 3782 822463 10005 or continuous
+    /\b\d{4}[\s]\d{6}[\s]\d{5}\b/g,
+    /\b\d{15}\b/g,
+    // 13 digits (some Visa)
+    /\b\d{13}\b/g
+  ]
+
+  const seen = new Set<string>()
+
+  for (const pattern of cardPatterns) {
+    pattern.lastIndex = 0
+    let match: RegExpExecArray | null
+    while ((match = pattern.exec(text)) !== null) {
+      const cardText = match[0]
+      const digitsOnly = cardText.replace(/\D/g, '')
+
+      // Skip if we've already processed this card number
+      if (seen.has(digitsOnly)) continue
+      seen.add(digitsOnly)
+
+      // Validate with Luhn algorithm
+      if (isValidLuhn(digitsOnly)) {
+        // Check for valid card prefixes (Visa, Mastercard, Amex, Discover, etc.)
+        const isValidPrefix =
+          digitsOnly.startsWith('4') || // Visa
+          /^5[1-5]/.test(digitsOnly) || // Mastercard
+          /^2[2-7]/.test(digitsOnly) || // Mastercard (2-series)
+          /^3[47]/.test(digitsOnly) || // Amex
+          digitsOnly.startsWith('6011') || // Discover
+          /^65/.test(digitsOnly) || // Discover
+          /^64[4-9]/.test(digitsOnly) // Discover
+
+        if (isValidPrefix) {
+          addEntity({
+            text: cardText,
+            type: 'credit_card',
+            start: match.index,
+            end: match.index + cardText.length,
+            confidence: 95
+          })
+        }
+      }
+    }
+  }
+}
+
+// Validate IBAN structure
+function isValidIBAN(iban: string): boolean {
+  const cleanIBAN = iban.replace(/\s/g, '').toUpperCase()
+
+  // Check length (varies by country, but minimum 15, maximum 34)
+  if (cleanIBAN.length < 15 || cleanIBAN.length > 34) return false
+
+  // Check format: 2 letters + 2 digits + alphanumeric
+  if (!/^[A-Z]{2}\d{2}[A-Z0-9]+$/.test(cleanIBAN)) return false
+
+  // Move first 4 chars to end and convert letters to numbers (A=10, B=11, etc.)
+  const rearranged = cleanIBAN.slice(4) + cleanIBAN.slice(0, 4)
+  const numericString = rearranged.replace(/[A-Z]/g, (char) =>
+    (char.charCodeAt(0) - 55).toString()
+  )
+
+  // Mod 97 check
+  let remainder = 0
+  for (let i = 0; i < numericString.length; i++) {
+    remainder = (remainder * 10 + parseInt(numericString[i], 10)) % 97
+  }
+
+  return remainder === 1
+}
+
+// Detect IBAN numbers with validation
+function detectIBANs(
+  text: string,
+  addEntity: (entity: NEREntity) => void
+): void {
+  // IBAN patterns (with or without spaces)
+  const ibanPatterns = [
+    // Standard IBAN with spaces: SA03 8000 0000 6080 1016 7519
+    /\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){3,7}\s?[A-Z0-9]{1,4}\b/gi,
+    // IBAN without spaces: SA0380000000608010167519
+    /\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/gi
+  ]
+
+  const seen = new Set<string>()
+
+  for (const pattern of ibanPatterns) {
+    pattern.lastIndex = 0
+    let match: RegExpExecArray | null
+    while ((match = pattern.exec(text)) !== null) {
+      const ibanText = match[0]
+      const cleanIBAN = ibanText.replace(/\s/g, '').toUpperCase()
+
+      // Skip if we've already processed this IBAN
+      if (seen.has(cleanIBAN)) continue
+      seen.add(cleanIBAN)
+
+      // Validate IBAN structure
+      if (isValidIBAN(cleanIBAN)) {
+        addEntity({
+          text: ibanText,
+          type: 'iban',
+          start: match.index,
+          end: match.index + ibanText.length,
+          confidence: 95
+        })
+      }
     }
   }
 }

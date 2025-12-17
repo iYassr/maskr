@@ -5,7 +5,7 @@ interface TestCase {
   input: string
   customNames?: string[]
   expected: {
-    type: 'person' | 'money' | 'phone' | 'email' | 'ip'
+    type: 'person' | 'financial' | 'credit_card' | 'iban' | 'phone' | 'email' | 'ip'
     text: string
     shouldDetect: boolean
   }[]
@@ -17,184 +17,184 @@ const testCases: TestCase[] = [
   {
     name: 'Dollar with $ symbol',
     input: 'The price is $100',
-    expected: [{ type: 'money', text: '$100', shouldDetect: true }]
+    expected: [{ type: 'financial', text: '$100', shouldDetect: true }]
   },
   {
     name: 'Dollar with thousands',
     input: 'Total cost: $1,500.00',
-    expected: [{ type: 'money', text: '$1,500.00', shouldDetect: true }]
+    expected: [{ type: 'financial', text: '$1,500.00', shouldDetect: true }]
   },
   {
     name: 'Dollar millions',
     input: 'Revenue of $5M expected',
-    expected: [{ type: 'money', text: '$5M', shouldDetect: true }]
+    expected: [{ type: 'financial', text: '$5M', shouldDetect: true }]
   },
   {
     name: 'Dollar with million word',
     input: 'Budget is $2.5 million',
-    expected: [{ type: 'money', text: '$2.5 million', shouldDetect: true }]
+    expected: [{ type: 'financial', text: '$2.5 million', shouldDetect: true }]
   },
   {
     name: 'Euro symbol before',
     input: 'Price: €500',
-    expected: [{ type: 'money', text: '€500', shouldDetect: true }]
+    expected: [{ type: 'financial', text: '€500', shouldDetect: true }]
   },
   {
     name: 'Euro symbol after',
     input: 'Cost is 250€',
-    expected: [{ type: 'money', text: '250€', shouldDetect: true }]
+    expected: [{ type: 'financial', text: '250€', shouldDetect: true }]
   },
   {
     name: 'EUR code',
     input: 'Payment of EUR 1,000',
-    expected: [{ type: 'money', text: 'EUR 1,000', shouldDetect: true }]
+    expected: [{ type: 'financial', text: 'EUR 1,000', shouldDetect: true }]
   },
   {
     name: 'British Pound symbol',
     input: 'Salary: £75,000',
-    expected: [{ type: 'money', text: '£75,000', shouldDetect: true }]
+    expected: [{ type: 'financial', text: '£75,000', shouldDetect: true }]
   },
   {
     name: 'GBP code',
     input: 'Transfer GBP 500',
-    expected: [{ type: 'money', text: 'GBP 500', shouldDetect: true }]
+    expected: [{ type: 'financial', text: 'GBP 500', shouldDetect: true }]
   },
   {
     name: 'SAR before number',
     input: 'Amount: SAR 10,000',
-    expected: [{ type: 'money', text: 'SAR 10,000', shouldDetect: true }]
+    expected: [{ type: 'financial', text: 'SAR 10,000', shouldDetect: true }]
   },
   {
     name: 'SAR after number',
     input: 'Total: 5,000 SAR',
-    expected: [{ type: 'money', text: '5,000 SAR', shouldDetect: true }]
+    expected: [{ type: 'financial', text: '5,000 SAR', shouldDetect: true }]
   },
   {
     name: 'SR (Saudi Riyal short)',
     input: 'Price SR 200',
-    expected: [{ type: 'money', text: 'SR 200', shouldDetect: true }]
+    expected: [{ type: 'financial', text: 'SR 200', shouldDetect: true }]
   },
   {
     name: 'AED currency',
     input: 'Fee: AED 350',
-    expected: [{ type: 'money', text: 'AED 350', shouldDetect: true }]
+    expected: [{ type: 'financial', text: 'AED 350', shouldDetect: true }]
   },
   {
     name: 'USD explicit',
     input: 'Balance: USD 1,250.50',
-    expected: [{ type: 'money', text: 'USD 1,250.50', shouldDetect: true }]
+    expected: [{ type: 'financial', text: 'USD 1,250.50', shouldDetect: true }]
   },
   {
     name: 'Yen symbol',
     input: 'Cost: ¥10,000',
-    expected: [{ type: 'money', text: '¥10,000', shouldDetect: true }]
+    expected: [{ type: 'financial', text: '¥10,000', shouldDetect: true }]
   },
   {
     name: 'JPY code',
     input: 'JPY 50,000 transfer',
-    expected: [{ type: 'money', text: 'JPY 50,000', shouldDetect: true }]
+    expected: [{ type: 'financial', text: 'JPY 50,000', shouldDetect: true }]
   },
   {
     name: 'Indian Rupee symbol',
     input: 'Amount ₹5,000',
-    expected: [{ type: 'money', text: '₹5,000', shouldDetect: true }]
+    expected: [{ type: 'financial', text: '₹5,000', shouldDetect: true }]
   },
   {
     name: 'INR code',
     input: 'INR 25,000 credited',
-    expected: [{ type: 'money', text: 'INR 25,000', shouldDetect: true }]
+    expected: [{ type: 'financial', text: 'INR 25,000', shouldDetect: true }]
   },
   {
     name: 'CHF currency',
     input: 'CHF 1,200 fee',
-    expected: [{ type: 'money', text: 'CHF 1,200', shouldDetect: true }]
+    expected: [{ type: 'financial', text: 'CHF 1,200', shouldDetect: true }]
   },
   {
     name: 'Word dollars',
     input: 'Cost is 500 dollars',
-    expected: [{ type: 'money', text: '500 dollars', shouldDetect: true }]
+    expected: [{ type: 'financial', text: '500 dollars', shouldDetect: true }]
   },
   {
     name: 'Word euros',
     input: 'Pay 100 euros',
-    expected: [{ type: 'money', text: '100 euros', shouldDetect: true }]
+    expected: [{ type: 'financial', text: '100 euros', shouldDetect: true }]
   },
   {
     name: 'Word pounds',
     input: 'Worth 50 pounds',
-    expected: [{ type: 'money', text: '50 pounds', shouldDetect: true }]
+    expected: [{ type: 'financial', text: '50 pounds', shouldDetect: true }]
   },
   {
     name: 'Word riyals',
     input: 'Fee is 1000 riyals',
-    expected: [{ type: 'money', text: '1000 riyals', shouldDetect: true }]
+    expected: [{ type: 'financial', text: '1000 riyals', shouldDetect: true }]
   },
   {
     name: 'Word dirhams',
     input: 'Costs 200 dirhams',
-    expected: [{ type: 'money', text: '200 dirhams', shouldDetect: true }]
+    expected: [{ type: 'financial', text: '200 dirhams', shouldDetect: true }]
   },
 
   // Should NOT DETECT (no currency symbol - false positive prevention)
   {
     name: 'Plain number - no currency',
     input: 'There are 100 items',
-    expected: [{ type: 'money', text: '100', shouldDetect: false }]
+    expected: [{ type: 'financial', text: '100', shouldDetect: false }]
   },
   {
     name: 'Number with comma - no currency',
     input: 'Population: 1,500,000',
-    expected: [{ type: 'money', text: '1,500,000', shouldDetect: false }]
+    expected: [{ type: 'financial', text: '1,500,000', shouldDetect: false }]
   },
   {
     name: 'Percentage',
     input: 'Growth of 25%',
-    expected: [{ type: 'money', text: '25', shouldDetect: false }]
+    expected: [{ type: 'financial', text: '25', shouldDetect: false }]
   },
   {
     name: 'Year number',
     input: 'In the year 2024',
-    expected: [{ type: 'money', text: '2024', shouldDetect: false }]
+    expected: [{ type: 'financial', text: '2024', shouldDetect: false }]
   },
   {
     name: 'Phone number digits',
     input: 'Call 5551234',
-    expected: [{ type: 'money', text: '5551234', shouldDetect: false }]
+    expected: [{ type: 'financial', text: '5551234', shouldDetect: false }]
   },
   {
     name: 'Quantity',
     input: 'Order 50 units',
-    expected: [{ type: 'money', text: '50', shouldDetect: false }]
+    expected: [{ type: 'financial', text: '50', shouldDetect: false }]
   },
   {
     name: 'Score',
     input: 'Score: 95 out of 100',
-    expected: [{ type: 'money', text: '95', shouldDetect: false }, { type: 'money', text: '100', shouldDetect: false }]
+    expected: [{ type: 'financial', text: '95', shouldDetect: false }, { type: 'financial', text: '100', shouldDetect: false }]
   },
   {
     name: 'Version number',
     input: 'Version 2.5.1',
-    expected: [{ type: 'money', text: '2.5.1', shouldDetect: false }]
+    expected: [{ type: 'financial', text: '2.5.1', shouldDetect: false }]
   },
   {
     name: 'Decimal without currency',
     input: 'Value is 3.14159',
-    expected: [{ type: 'money', text: '3.14159', shouldDetect: false }]
+    expected: [{ type: 'financial', text: '3.14159', shouldDetect: false }]
   },
   {
     name: 'Age',
     input: 'He is 35 years old',
-    expected: [{ type: 'money', text: '35', shouldDetect: false }]
+    expected: [{ type: 'financial', text: '35', shouldDetect: false }]
   },
   {
     name: 'Distance',
     input: 'Drive 500 kilometers',
-    expected: [{ type: 'money', text: '500', shouldDetect: false }]
+    expected: [{ type: 'financial', text: '500', shouldDetect: false }]
   },
   {
     name: 'Weight',
     input: 'Weighs 75 kg',
-    expected: [{ type: 'money', text: '75', shouldDetect: false }]
+    expected: [{ type: 'financial', text: '75', shouldDetect: false }]
   },
 
   // ==================== NAME TESTS ====================
@@ -340,12 +340,81 @@ const testCases: TestCase[] = [
     expected: [{ type: 'ip', text: '2.3.4.5', shouldDetect: false }]
   },
 
+  // ==================== CREDIT CARD TESTS ====================
+  {
+    name: 'Visa card with spaces',
+    input: 'Card: 4111 1111 1111 1111',
+    expected: [{ type: 'credit_card', text: '4111 1111 1111 1111', shouldDetect: true }]
+  },
+  {
+    name: 'Visa card with dashes',
+    input: 'Payment card: 4111-1111-1111-1111',
+    expected: [{ type: 'credit_card', text: '4111-1111-1111-1111', shouldDetect: true }]
+  },
+  {
+    name: 'Visa card continuous',
+    input: 'Card number 4111111111111111',
+    expected: [{ type: 'credit_card', text: '4111111111111111', shouldDetect: true }]
+  },
+  {
+    name: 'Mastercard',
+    input: 'MC: 5500 0000 0000 0004',
+    expected: [{ type: 'credit_card', text: '5500 0000 0000 0004', shouldDetect: true }]
+  },
+  {
+    name: 'Amex card (15 digits)',
+    input: 'Amex: 378282246310005',
+    expected: [{ type: 'credit_card', text: '378282246310005', shouldDetect: true }]
+  },
+  {
+    name: 'Invalid card - fails Luhn',
+    input: 'Fake card: 1234567890123456',
+    expected: [{ type: 'credit_card', text: '1234567890123456', shouldDetect: false }]
+  },
+  {
+    name: 'Random 16 digits - not a valid card prefix',
+    input: 'Number: 9999888877776666',
+    expected: [{ type: 'credit_card', text: '9999888877776666', shouldDetect: false }]
+  },
+
+  // ==================== IBAN TESTS ====================
+  {
+    name: 'Saudi IBAN',
+    input: 'Account: SA0380000000608010167519',
+    expected: [{ type: 'iban', text: 'SA0380000000608010167519', shouldDetect: true }]
+  },
+  {
+    name: 'German IBAN with spaces',
+    input: 'IBAN: DE89 3704 0044 0532 0130 00',
+    expected: [{ type: 'iban', text: 'DE89 3704 0044 0532 0130 00', shouldDetect: true }]
+  },
+  {
+    name: 'UK IBAN',
+    input: 'Bank: GB29NWBK60161331926819',
+    expected: [{ type: 'iban', text: 'GB29NWBK60161331926819', shouldDetect: true }]
+  },
+  {
+    name: 'French IBAN',
+    input: 'FR7630006000011234567890189',
+    expected: [{ type: 'iban', text: 'FR7630006000011234567890189', shouldDetect: true }]
+  },
+  {
+    name: 'Invalid IBAN - wrong check digits',
+    input: 'Bad IBAN: DE00370400440532013000',
+    expected: [{ type: 'iban', text: 'DE00370400440532013000', shouldDetect: false }]
+  },
+  {
+    name: 'Too short for IBAN',
+    input: 'Short: SA123456',
+    expected: [{ type: 'iban', text: 'SA123456', shouldDetect: false }]
+  },
+
   // ==================== MIXED CONTENT TESTS ====================
   {
     name: 'Invoice with money and IP',
     input: 'Invoice for $5,000 from server 192.168.1.50',
     expected: [
-      { type: 'money', text: '$5,000', shouldDetect: true },
+      { type: 'financial', text: '$5,000', shouldDetect: true },
       { type: 'ip', text: '192.168.1.50', shouldDetect: true }
     ]
   },
@@ -354,7 +423,7 @@ const testCases: TestCase[] = [
     input: 'Agreement for EUR 50,000 payable to the contractor.',
     customNames: [],
     expected: [
-      { type: 'money', text: 'EUR 50,000', shouldDetect: true }
+      { type: 'financial', text: 'EUR 50,000', shouldDetect: true }
     ]
   },
   {
@@ -363,7 +432,7 @@ const testCases: TestCase[] = [
     customNames: ['Mohammed Al-Faisal'],
     expected: [
       { type: 'person', text: 'Mohammed Al-Faisal', shouldDetect: true },
-      { type: 'money', text: 'SAR 1,000,000', shouldDetect: true }
+      { type: 'financial', text: 'SAR 1,000,000', shouldDetect: true }
     ]
   },
   {
@@ -371,7 +440,7 @@ const testCases: TestCase[] = [
     input: 'Q1 report shows revenue of $2.5M. Prepared by Finance Team.',
     customNames: [],
     expected: [
-      { type: 'money', text: '$2.5M', shouldDetect: true },
+      { type: 'financial', text: '$2.5M', shouldDetect: true },
       { type: 'person', text: 'Finance Team', shouldDetect: false }
     ]
   },
@@ -380,7 +449,7 @@ const testCases: TestCase[] = [
     input: 'Server 10.0.0.100 costs $500 per month',
     expected: [
       { type: 'ip', text: '10.0.0.100', shouldDetect: true },
-      { type: 'money', text: '$500', shouldDetect: true }
+      { type: 'financial', text: '$500', shouldDetect: true }
     ]
   },
 
@@ -404,9 +473,9 @@ const testCases: TestCase[] = [
     name: 'Numbers that look like money but arent',
     input: 'Room 500, Building 100, Floor 25',
     expected: [
-      { type: 'money', text: '500', shouldDetect: false },
-      { type: 'money', text: '100', shouldDetect: false },
-      { type: 'money', text: '25', shouldDetect: false }
+      { type: 'financial', text: '500', shouldDetect: false },
+      { type: 'financial', text: '100', shouldDetect: false },
+      { type: 'financial', text: '25', shouldDetect: false }
     ]
   },
   {
@@ -486,7 +555,9 @@ function runTests() {
 
   // Category breakdown
   const categories = {
-    money: { total: 0, passed: 0 },
+    financial: { total: 0, passed: 0 },
+    credit_card: { total: 0, passed: 0 },
+    iban: { total: 0, passed: 0 },
     person: { total: 0, passed: 0 },
     ip: { total: 0, passed: 0 },
     mixed: { total: 0, passed: 0 },
@@ -504,7 +575,13 @@ function runTests() {
         name.includes('distance') || name.includes('weight') || name.includes('phone number') ||
         name.includes('chf') || name.includes('inr') || name.includes('jpy') || name.includes('aed') ||
         name.includes('usd') || name.includes('gbp') || name.includes('riyal') || name.includes('dirham')) {
-      cat = 'money'
+      cat = 'financial'
+    } else if (name.includes('visa') || name.includes('mastercard') || name.includes('amex') ||
+               name.includes('card') || name.includes('luhn')) {
+      cat = 'credit_card'
+    } else if (name.includes('iban') || name.includes('saudi iban') || name.includes('german iban') ||
+               name.includes('uk iban') || name.includes('french iban')) {
+      cat = 'iban'
     } else if (name.includes('name') || name.includes('custom') || name.includes('arabic') ||
                name.includes('western') || name.includes('signature') || name.includes('ceo') ||
                name.includes('dear') || name.includes('mr.')) {

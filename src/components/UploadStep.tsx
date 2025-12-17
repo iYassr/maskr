@@ -12,7 +12,9 @@ const typeToCategory: Record<string, DetectionCategory> = {
   person: 'pii',
   email: 'pii',
   phone: 'pii',
-  money: 'financial',
+  financial: 'financial',
+  credit_card: 'financial',
+  iban: 'financial',
   ip: 'technical'
 }
 
@@ -22,7 +24,9 @@ function generatePlaceholder(type: string, index: number): string {
     person: 'PERSON',
     email: 'EMAIL',
     phone: 'PHONE',
-    money: 'AMOUNT',
+    financial: 'AMOUNT',
+    credit_card: 'CARD',
+    iban: 'IBAN',
     ip: 'IP_ADDRESS'
   }
   return `[${prefixes[type] || 'REDACTED'}_${index + 1}]`
