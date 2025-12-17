@@ -8,12 +8,12 @@ interface ConfigModalProps {
 
 type Tab = 'company' | 'detection' | 'export'
 
-const categoryConfig: Record<DetectionCategory, { label: string; description: string }> = {
-  pii: { label: 'Personal Information', description: 'Names, emails, phones, SSN, addresses' },
-  company: { label: 'Company Information', description: 'Organization names, locations, domains' },
-  financial: { label: 'Financial Data', description: 'Credit cards, bank accounts, amounts' },
-  technical: { label: 'Technical Information', description: 'IP addresses, API keys, credentials' },
-  custom: { label: 'Custom Keywords', description: 'Your specified terms and phrases' }
+const categoryConfig: Record<DetectionCategory, { label: string; description: string; badgeClass: string }> = {
+  pii: { label: 'Personal Information', description: 'Names, emails, phones, SSN, addresses', badgeClass: 'badge-error' },
+  company: { label: 'Company Information', description: 'Organization names, locations, domains', badgeClass: 'badge-info' },
+  financial: { label: 'Financial Data', description: 'Credit cards, bank accounts, amounts', badgeClass: 'badge-success' },
+  technical: { label: 'Technical Information', description: 'IP addresses, API keys, credentials', badgeClass: 'badge-secondary' },
+  custom: { label: 'Custom Keywords', description: 'Your specified terms and phrases', badgeClass: 'badge-warning' }
 }
 
 export function ConfigModal({ onClose }: ConfigModalProps) {
@@ -79,25 +79,26 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
   ]
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-      <div className="glass rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col animate-scale-in border border-[var(--border-primary)]">
+    <div className="modal modal-open">
+      <div className="modal-backdrop bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="modal-box max-w-2xl max-h-[85vh] flex flex-col p-0 animate-scale-in bg-base-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border-primary)]">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-neutral">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center">
-              <svg className="w-5 h-5 text-[var(--bg-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+              <svg className="w-5 h-5 text-primary-content" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
             <div>
-              <h2 className="text-lg font-display font-semibold text-[var(--text-primary)]">Settings</h2>
-              <p className="text-xs text-[var(--text-tertiary)]">Configure detection and export preferences</p>
+              <h2 className="text-lg font-semibold text-base-content">Settings</h2>
+              <p className="text-xs text-neutral-content">Configure detection and export preferences</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="btn-ghost p-2 rounded-lg"
+            className="btn btn-ghost btn-sm btn-square"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -106,16 +107,12 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 px-6 py-3 border-b border-[var(--border-primary)] bg-[var(--bg-tertiary)]">
+        <div className="tabs tabs-boxed gap-1 px-6 py-3 bg-base-300">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-                activeTab === tab.id
-                  ? 'bg-[var(--accent-primary)] text-[var(--bg-primary)] shadow-lg shadow-[var(--accent-primary-dim)]'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
-              }`}
+              className={`tab gap-2 ${activeTab === tab.id ? 'tab-active bg-primary text-primary-content' : ''}`}
             >
               {tab.icon}
               {tab.label}
@@ -128,9 +125,9 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
           {activeTab === 'company' && (
             <div className="space-y-6 animate-fade-in">
               {/* Company Name */}
-              <div className="card p-5">
-                <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-primary)] mb-3">
-                  <svg className="w-4 h-4 text-[var(--accent-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="card bg-base-300 p-5">
+                <label className="flex items-center gap-2 text-sm font-medium text-base-content mb-3">
+                  <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                   Company Name
@@ -140,48 +137,48 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
                   value={config.companyInfo.primaryName}
                   onChange={(e) => updateCompanyInfo({ primaryName: e.target.value })}
                   placeholder="Enter your company name"
-                  className="input-field w-full px-4 py-3 rounded-xl text-sm"
+                  className="input input-bordered w-full bg-base-100"
                 />
-                <p className="mt-2 text-xs text-[var(--text-tertiary)] flex items-center gap-1.5">
+                <p className="mt-2 text-xs text-neutral-content flex items-center gap-1.5">
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Will be masked as <code className="px-1.5 py-0.5 bg-[var(--bg-tertiary)] rounded text-[var(--accent-primary)]">&lt;COMPANY_NAME&gt;</code>
+                  Will be masked as <code className="px-1.5 py-0.5 bg-base-100 rounded text-primary font-mono">&lt;COMPANY_NAME&gt;</code>
                 </p>
               </div>
 
               {/* Aliases */}
-              <div className="card p-5">
-                <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-primary)] mb-3">
-                  <svg className="w-4 h-4 text-[var(--color-company)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="card bg-base-300 p-5">
+                <label className="flex items-center gap-2 text-sm font-medium text-base-content mb-3">
+                  <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                   </svg>
                   Company Aliases
                 </label>
-                <div className="flex gap-2 mb-3">
+                <div className="join w-full mb-3">
                   <input
                     type="text"
                     value={newAlias}
                     onChange={(e) => setNewAlias(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAddAlias()}
                     placeholder="Add alias (e.g., acronym, abbreviation)"
-                    className="input-field flex-1 px-4 py-2.5 rounded-lg text-sm"
+                    className="input input-bordered join-item flex-1 bg-base-100"
                   />
                   <button
                     onClick={handleAddAlias}
-                    className="btn-primary px-4 py-2.5 rounded-lg text-sm font-medium"
+                    className="btn btn-primary join-item"
                   >
                     Add
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {config.companyInfo.aliases.length === 0 ? (
-                    <span className="text-sm text-[var(--text-muted)]">No aliases added yet</span>
+                    <span className="text-sm text-neutral-content">No aliases added yet</span>
                   ) : (
                     config.companyInfo.aliases.map((alias) => (
                       <span
                         key={alias}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-company-dim)] text-[var(--color-company)] text-sm rounded-lg border border-[var(--color-company)] font-mono"
+                        className="badge badge-lg badge-info gap-1.5 font-mono"
                       >
                         {alias}
                         <button
@@ -199,37 +196,37 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
               </div>
 
               {/* Custom Keywords */}
-              <div className="card p-5">
-                <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-primary)] mb-3">
-                  <svg className="w-4 h-4 text-[var(--color-custom)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="card bg-base-300 p-5">
+                <label className="flex items-center gap-2 text-sm font-medium text-base-content mb-3">
+                  <svg className="w-4 h-4 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   Custom Keywords to Detect
                 </label>
-                <div className="flex gap-2 mb-3">
+                <div className="join w-full mb-3">
                   <input
                     type="text"
                     value={newKeyword}
                     onChange={(e) => setNewKeyword(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAddKeyword()}
                     placeholder="Add keyword (e.g., project name, client)"
-                    className="input-field flex-1 px-4 py-2.5 rounded-lg text-sm"
+                    className="input input-bordered join-item flex-1 bg-base-100"
                   />
                   <button
                     onClick={handleAddKeyword}
-                    className="btn-primary px-4 py-2.5 rounded-lg text-sm font-medium"
+                    className="btn btn-primary join-item"
                   >
                     Add
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {config.customEntities.keywords.length === 0 ? (
-                    <span className="text-sm text-[var(--text-muted)]">No keywords added yet</span>
+                    <span className="text-sm text-neutral-content">No keywords added yet</span>
                   ) : (
                     config.customEntities.keywords.map((keyword) => (
                       <span
                         key={keyword}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-custom-dim)] text-[var(--color-custom)] text-sm rounded-lg border border-[var(--color-custom)] font-mono"
+                        className="badge badge-lg badge-warning gap-1.5 font-mono"
                       >
                         {keyword}
                         <button
@@ -251,9 +248,9 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
           {activeTab === 'detection' && (
             <div className="space-y-6 animate-fade-in">
               {/* Categories */}
-              <div className="card p-5">
-                <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-primary)] mb-4">
-                  <svg className="w-4 h-4 text-[var(--accent-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="card bg-base-300 p-5">
+                <label className="flex items-center gap-2 text-sm font-medium text-base-content mb-4">
+                  <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                   </svg>
                   Detection Categories
@@ -267,8 +264,8 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
                         className={`
                           flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all duration-200 border
                           ${isEnabled
-                            ? 'bg-[var(--bg-elevated)] border-[var(--accent-primary)]'
-                            : 'bg-[var(--bg-tertiary)] border-[var(--border-primary)] hover:border-[var(--text-tertiary)]'
+                            ? 'bg-base-100 border-primary'
+                            : 'bg-base-200 border-neutral hover:border-neutral-content'
                           }
                         `}
                       >
@@ -276,16 +273,17 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
                           type="checkbox"
                           checked={isEnabled}
                           onChange={() => toggleCategory(category)}
+                          className="checkbox checkbox-primary"
                         />
                         <div className="flex-1">
-                          <span className={`text-sm font-medium ${isEnabled ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>
+                          <span className={`text-sm font-medium ${isEnabled ? 'text-base-content' : 'text-neutral-content'}`}>
                             {categoryConfig[category].label}
                           </span>
-                          <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
+                          <p className="text-xs text-neutral-content mt-0.5">
                             {categoryConfig[category].description}
                           </p>
                         </div>
-                        <span className={`badge badge-${category}`}>
+                        <span className={`badge ${categoryConfig[category].badgeClass}`}>
                           {category.toUpperCase()}
                         </span>
                       </label>
@@ -295,15 +293,15 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
               </div>
 
               {/* Confidence Threshold */}
-              <div className="card p-5">
+              <div className="card bg-base-300 p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-primary)]">
-                    <svg className="w-4 h-4 text-[var(--accent-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <label className="flex items-center gap-2 text-sm font-medium text-base-content">
+                    <svg className="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                     Minimum Confidence
                   </label>
-                  <span className="text-2xl font-display font-bold text-[var(--accent-primary)]">
+                  <span className="text-2xl font-bold text-primary">
                     {config.detectionSettings.minConfidence}%
                   </span>
                 </div>
@@ -313,25 +311,26 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
                   max="100"
                   value={config.detectionSettings.minConfidence}
                   onChange={(e) => updateDetectionSettings({ minConfidence: parseInt(e.target.value) })}
-                  className="w-full"
+                  className="range range-primary"
                 />
-                <div className="flex justify-between text-xs text-[var(--text-tertiary)] mt-2">
+                <div className="flex justify-between text-xs text-neutral-content mt-2">
                   <span>50% (More detections)</span>
                   <span>100% (Higher accuracy)</span>
                 </div>
               </div>
 
               {/* Auto-mask */}
-              <div className="card p-5">
+              <div className="card bg-base-300 p-5">
                 <label className="flex items-center gap-4 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={config.detectionSettings.autoMaskHighConfidence}
                     onChange={(e) => updateDetectionSettings({ autoMaskHighConfidence: e.target.checked })}
+                    className="toggle toggle-primary"
                   />
                   <div className="flex-1">
-                    <span className="text-sm font-medium text-[var(--text-primary)]">Auto-select high confidence items</span>
-                    <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
+                    <span className="text-sm font-medium text-base-content">Auto-select high confidence items</span>
+                    <p className="text-xs text-neutral-content mt-0.5">
                       Automatically select detections with 90%+ confidence for masking
                     </p>
                   </div>
@@ -343,21 +342,22 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
           {activeTab === 'export' && (
             <div className="space-y-6 animate-fade-in">
               {/* Include mapping file */}
-              <div className="card p-5">
+              <div className="card bg-base-300 p-5">
                 <label className="flex items-center gap-4 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={config.exportPreferences.includeMappingFile}
                     onChange={(e) => updateExportPreferences({ includeMappingFile: e.target.checked })}
+                    className="toggle toggle-primary"
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <svg className="w-4 h-4 text-[var(--accent-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      <span className="text-sm font-medium text-[var(--text-primary)]">Show mapping export option</span>
+                      <span className="text-sm font-medium text-base-content">Show mapping export option</span>
                     </div>
-                    <p className="text-xs text-[var(--text-tertiary)] mt-1 ml-6">
+                    <p className="text-xs text-neutral-content mt-1 ml-6">
                       Export a JSON file mapping placeholders to original values for later reference
                     </p>
                   </div>
@@ -365,9 +365,9 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
               </div>
 
               {/* Default format */}
-              <div className="card p-5">
-                <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-primary)] mb-3">
-                  <svg className="w-4 h-4 text-[var(--accent-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="card bg-base-300 p-5">
+                <label className="flex items-center gap-2 text-sm font-medium text-base-content mb-3">
+                  <svg className="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
                   Default Export Format
@@ -381,13 +381,11 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
                     <button
                       key={format.value}
                       onClick={() => updateExportPreferences({ defaultFormat: format.value as 'same' | 'txt' | 'md' })}
-                      className={`
-                        p-4 rounded-xl text-center transition-all duration-200 border
-                        ${config.exportPreferences.defaultFormat === format.value
-                          ? 'bg-[var(--accent-primary-dim)] border-[var(--accent-primary)] text-[var(--accent-primary)]'
-                          : 'bg-[var(--bg-tertiary)] border-[var(--border-primary)] text-[var(--text-secondary)] hover:border-[var(--text-tertiary)]'
-                        }
-                      `}
+                      className={`btn flex-col h-auto py-4 ${
+                        config.exportPreferences.defaultFormat === format.value
+                          ? 'btn-primary'
+                          : 'btn-ghost bg-base-200'
+                      }`}
                     >
                       <div className="text-lg font-mono mb-1">{format.icon}</div>
                       <div className="text-xs">{format.label}</div>
@@ -397,19 +395,15 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
               </div>
 
               {/* Security note */}
-              <div className="card p-5 border-[var(--color-info)]">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[var(--color-info-dim)] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-4 h-4 text-[var(--color-info)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-[var(--text-primary)]">Privacy First</p>
-                    <p className="text-xs text-[var(--text-tertiary)] mt-1">
-                      All processing happens locally on your device. No data is ever sent to external servers.
-                    </p>
-                  </div>
+              <div className="alert alert-info">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <div>
+                  <p className="text-sm font-medium">Privacy First</p>
+                  <p className="text-xs opacity-80 mt-0.5">
+                    All processing happens locally on your device. No data is ever sent to external servers.
+                  </p>
                 </div>
               </div>
             </div>
@@ -417,10 +411,10 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--border-primary)] bg-[var(--bg-tertiary)]">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-neutral bg-base-300">
           <button
             onClick={resetConfig}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--color-danger)] hover:bg-[var(--color-danger-dim)] rounded-lg transition-colors"
+            className="btn btn-ghost btn-sm text-error gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -429,7 +423,7 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
           </button>
           <button
             onClick={onClose}
-            className="btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2"
+            className="btn btn-primary gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
