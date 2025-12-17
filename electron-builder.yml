@@ -13,7 +13,6 @@ files:
   - node_modules/**/*
 
 asarUnpack:
-  - node_modules/sharp/**/*
   - node_modules/tesseract.js/**/*
   - node_modules/tesseract.js-core/**/*
 

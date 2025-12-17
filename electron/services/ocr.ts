@@ -1,5 +1,12 @@
 import Tesseract from 'tesseract.js'
-import sharp from 'sharp'
+
+// Sharp is optional - native module may not be available on all platforms
+let sharp: typeof import('sharp') | null = null
+try {
+  sharp = require('sharp')
+} catch {
+  console.log('Sharp not available - image preprocessing disabled')
+}
 
 export interface OCRResult {
   text: string
@@ -21,6 +28,10 @@ export interface ProcessedImage {
 
 // Preprocess image for better OCR results
 async function preprocessImage(imageBuffer: Buffer): Promise<Buffer> {
+  if (!sharp) {
+    return imageBuffer
+  }
+
   try {
     // Convert to grayscale, increase contrast, and normalize
     const processed = await sharp(imageBuffer)
@@ -99,6 +110,16 @@ export function combineOCRResults(results: OCRResult[]): string {
 
 // Get image info from buffer
 export async function getImageInfo(buffer: Buffer): Promise<ProcessedImage | null> {
+  if (!sharp) {
+    // Without sharp, we can't get metadata but assume it's valid
+    return {
+      buffer,
+      width: 0,
+      height: 0,
+      format: 'unknown'
+    }
+  }
+
   try {
     const metadata = await sharp(buffer).metadata()
     return {
@@ -114,6 +135,24 @@ export async function getImageInfo(buffer: Buffer): Promise<ProcessedImage | nul
 
 // Check if buffer is a valid image
 export async function isValidImage(buffer: Buffer): Promise<boolean> {
+  if (!sharp) {
+    // Without sharp, check for common image magic bytes
+    if (buffer.length < 4) return false
+
+    // PNG
+    if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) return true
+    // JPEG
+    if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) return true
+    // GIF
+    if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) return true
+    // BMP
+    if (buffer[0] === 0x42 && buffer[1] === 0x4D) return true
+    // WebP
+    if (buffer.length >= 12 && buffer.slice(0, 4).toString() === 'RIFF' && buffer.slice(8, 12).toString() === 'WEBP') return true
+
+    return false
+  }
+
   try {
     await sharp(buffer).metadata()
     return true
