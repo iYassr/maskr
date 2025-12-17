@@ -8,7 +8,7 @@ import {
   createMaskedXlsx,
   createMaskedPdf
 } from './services/document-parser.js'
-import { extractEntities, detectPersonNames, detectOrganizations } from './services/ner.js'
+import { extractEntities, detectPersonNames } from './services/ner.js'
 import {
   extractTextFromImage,
   extractTextFromImages,
@@ -202,13 +202,12 @@ ipcMain.handle('ner:extract', async (_event, text: string, customNames?: string[
   try {
     const entities = extractEntities(text, customNames)
     const persons = detectPersonNames(text)
-    const organizations = detectOrganizations(text)
 
     return {
       success: true,
       entities,
       persons,
-      organizations
+      organizations: [] // Organizations are only detected via user configuration now
     }
   } catch (error) {
     console.error('NER extraction error:', error)
