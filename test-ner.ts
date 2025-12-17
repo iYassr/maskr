@@ -5,7 +5,7 @@ interface TestCase {
   input: string
   customNames?: string[]
   expected: {
-    type: 'person' | 'organization' | 'place' | 'date' | 'money' | 'phone' | 'email'
+    type: 'person' | 'organization' | 'money' | 'phone' | 'email' | 'ip'
     text: string
     shouldDetect: boolean
   }[]
@@ -289,54 +289,55 @@ const testCases: TestCase[] = [
     expected: [{ type: 'person', text: 'James', shouldDetect: false }]
   },
 
-  // ==================== DATE TESTS ====================
+  // ==================== IP ADDRESS TESTS ====================
   {
-    name: 'ISO date format',
-    input: 'Date: 2024-01-15',
-    expected: [{ type: 'date', text: '2024-01-15', shouldDetect: true }]
+    name: 'IPv4 standard address',
+    input: 'Server IP: 192.168.1.100',
+    expected: [{ type: 'ip', text: '192.168.1.100', shouldDetect: true }]
   },
   {
-    name: 'US date format',
-    input: 'Due: 01/15/2024',
-    expected: [{ type: 'date', text: '01/15/2024', shouldDetect: true }]
+    name: 'IPv4 localhost',
+    input: 'Connect to 127.0.0.1',
+    expected: [{ type: 'ip', text: '127.0.0.1', shouldDetect: true }]
   },
   {
-    name: 'US date short year',
-    input: 'Date: 1/5/24',
-    expected: [{ type: 'date', text: '1/5/24', shouldDetect: true }]
+    name: 'IPv4 private class A',
+    input: 'Gateway: 10.0.0.1',
+    expected: [{ type: 'ip', text: '10.0.0.1', shouldDetect: true }]
   },
   {
-    name: 'European date format',
-    input: 'Date: 15.01.2024',
-    expected: [{ type: 'date', text: '15.01.2024', shouldDetect: true }]
+    name: 'IPv4 private class B',
+    input: 'DNS: 172.16.0.1',
+    expected: [{ type: 'ip', text: '172.16.0.1', shouldDetect: true }]
   },
   {
-    name: 'Written date - full month',
-    input: 'Meeting on January 15, 2024',
-    expected: [{ type: 'date', text: 'January 15, 2024', shouldDetect: true }]
+    name: 'IPv4 max values',
+    input: 'Address: 255.255.255.255',
+    expected: [{ type: 'ip', text: '255.255.255.255', shouldDetect: true }]
   },
   {
-    name: 'Written date - abbreviated month',
-    input: 'Due: Jan 5, 2024',
-    expected: [{ type: 'date', text: 'Jan 5, 2024', shouldDetect: true }]
+    name: 'IPv6 full format',
+    input: 'Server: 2001:0db8:85a3:0000:0000:8a2e:0370:7334',
+    expected: [{ type: 'ip', text: '2001:0db8:85a3:0000:0000:8a2e:0370:7334', shouldDetect: true }]
   },
   {
-    name: 'Written date - day first',
-    input: 'On 15 January 2024',
-    expected: [{ type: 'date', text: '15 January 2024', shouldDetect: true }]
-  },
-  {
-    name: 'Date with ordinal',
-    input: 'Meeting on January 1st, 2024',
-    expected: [{ type: 'date', text: 'January 1st, 2024', shouldDetect: true }]
-  },
-  {
-    name: 'Multiple dates',
-    input: 'From 2024-01-01 to 2024-12-31',
+    name: 'Multiple IPv4 addresses',
+    input: 'Primary: 192.168.1.1, Secondary: 192.168.1.2',
     expected: [
-      { type: 'date', text: '2024-01-01', shouldDetect: true },
-      { type: 'date', text: '2024-12-31', shouldDetect: true }
+      { type: 'ip', text: '192.168.1.1', shouldDetect: true },
+      { type: 'ip', text: '192.168.1.2', shouldDetect: true }
     ]
+  },
+  // Should NOT detect version numbers as IPs
+  {
+    name: 'Version number - should not detect as IP',
+    input: 'Version 1.0.0.0 released',
+    expected: [{ type: 'ip', text: '1.0.0.0', shouldDetect: false }]
+  },
+  {
+    name: 'Small version number',
+    input: 'Update to 2.3.4.5',
+    expected: [{ type: 'ip', text: '2.3.4.5', shouldDetect: false }]
   },
 
   // ==================== ORGANIZATION TESTS ====================
@@ -356,54 +357,47 @@ const testCases: TestCase[] = [
     expected: [{ type: 'organization', text: 'Harvard University', shouldDetect: true }]
   },
 
-  // ==================== PLACE TESTS ====================
-  {
-    name: 'City name',
-    input: 'Located in New York',
-    expected: [{ type: 'place', text: 'New York', shouldDetect: true }]
-  },
-  {
-    name: 'Country name',
-    input: 'Traveling to Japan',
-    expected: [{ type: 'place', text: 'Japan', shouldDetect: true }]
-  },
-
   // ==================== MIXED CONTENT TESTS ====================
   {
-    name: 'Email with money and date',
-    input: 'Invoice for $5,000 due on 2024-03-15',
+    name: 'Invoice with money and IP',
+    input: 'Invoice for $5,000 from server 192.168.1.50',
     expected: [
       { type: 'money', text: '$5,000', shouldDetect: true },
-      { type: 'date', text: '2024-03-15', shouldDetect: true }
+      { type: 'ip', text: '192.168.1.50', shouldDetect: true }
     ]
   },
   {
-    name: 'Contract excerpt',
-    input: 'Agreement dated January 10, 2024 for EUR 50,000 payable to the contractor.',
+    name: 'Contract excerpt with currency',
+    input: 'Agreement for EUR 50,000 payable to the contractor.',
     customNames: [],
     expected: [
-      { type: 'date', text: 'January 10, 2024', shouldDetect: true },
       { type: 'money', text: 'EUR 50,000', shouldDetect: true }
     ]
   },
   {
-    name: 'Business document with custom name',
-    input: 'Mohammed Al-Faisal approved the budget of SAR 1,000,000 on 2024-02-20',
+    name: 'Business document with custom name and money',
+    input: 'Mohammed Al-Faisal approved the budget of SAR 1,000,000',
     customNames: ['Mohammed Al-Faisal'],
     expected: [
       { type: 'person', text: 'Mohammed Al-Faisal', shouldDetect: true },
-      { type: 'money', text: 'SAR 1,000,000', shouldDetect: true },
-      { type: 'date', text: '2024-02-20', shouldDetect: true }
+      { type: 'money', text: 'SAR 1,000,000', shouldDetect: true }
     ]
   },
   {
     name: 'Report without custom names',
-    input: 'Q1 report shows revenue of $2.5M. Prepared by Finance Team on March 1, 2024.',
+    input: 'Q1 report shows revenue of $2.5M. Prepared by Finance Team.',
     customNames: [],
     expected: [
       { type: 'money', text: '$2.5M', shouldDetect: true },
-      { type: 'date', text: 'March 1, 2024', shouldDetect: true },
       { type: 'person', text: 'Finance Team', shouldDetect: false }
+    ]
+  },
+  {
+    name: 'Server config with IP and money',
+    input: 'Server 10.0.0.100 costs $500 per month',
+    expected: [
+      { type: 'ip', text: '10.0.0.100', shouldDetect: true },
+      { type: 'money', text: '$500', shouldDetect: true }
     ]
   },
 
@@ -511,9 +505,8 @@ function runTests() {
   const categories = {
     money: { total: 0, passed: 0 },
     person: { total: 0, passed: 0 },
-    date: { total: 0, passed: 0 },
+    ip: { total: 0, passed: 0 },
     organization: { total: 0, passed: 0 },
-    place: { total: 0, passed: 0 },
     mixed: { total: 0, passed: 0 },
     edge: { total: 0, passed: 0 }
   }
@@ -525,7 +518,7 @@ function runTests() {
         name.includes('sar') || name.includes('yen') || name.includes('currency') ||
         name.includes('money') || name.includes('plain number') || name.includes('percentage') ||
         name.includes('year number') || name.includes('quantity') || name.includes('score') ||
-        name.includes('version') || name.includes('decimal') || name.includes('age') ||
+        name.includes('decimal') || name.includes('age') ||
         name.includes('distance') || name.includes('weight') || name.includes('phone number') ||
         name.includes('chf') || name.includes('inr') || name.includes('jpy') || name.includes('aed') ||
         name.includes('usd') || name.includes('gbp') || name.includes('riyal') || name.includes('dirham')) {
@@ -534,14 +527,14 @@ function runTests() {
                name.includes('western') || name.includes('signature') || name.includes('ceo') ||
                name.includes('dear') || name.includes('mr.')) {
       cat = 'person'
-    } else if (name.includes('date') || name.includes('iso') || name.includes('european')) {
-      cat = 'date'
+    } else if (name.includes('ipv4') || name.includes('ipv6') || name.includes('ip ') ||
+               name.includes('localhost') || name.includes('gateway') || name.includes('dns') ||
+               name.includes('version number')) {
+      cat = 'ip'
     } else if (name.includes('company') || name.includes('university') || name.includes('organization')) {
       cat = 'organization'
-    } else if (name.includes('city') || name.includes('country') || name.includes('place')) {
-      cat = 'place'
-    } else if (name.includes('mixed') || name.includes('email with') || name.includes('contract') ||
-               name.includes('business') || name.includes('report')) {
+    } else if (name.includes('mixed') || name.includes('invoice') || name.includes('contract') ||
+               name.includes('business') || name.includes('report') || name.includes('server config')) {
       cat = 'mixed'
     }
 

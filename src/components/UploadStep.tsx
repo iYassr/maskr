@@ -13,8 +13,7 @@ const typeToCategory: Record<string, DetectionCategory> = {
   phone: 'pii',
   organization: 'company',
   money: 'financial',
-  place: 'technical',
-  date: 'technical'
+  ip: 'technical'
 }
 
 // Generate placeholder based on type
@@ -25,8 +24,7 @@ function generatePlaceholder(type: string, index: number): string {
     phone: 'PHONE',
     organization: 'ORG',
     money: 'AMOUNT',
-    place: 'LOCATION',
-    date: 'DATE'
+    ip: 'IP_ADDRESS'
   }
   return `[${prefixes[type] || 'REDACTED'}_${index + 1}]`
 }

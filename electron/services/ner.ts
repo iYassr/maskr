@@ -2,7 +2,7 @@ import nlp from 'compromise'
 
 export interface NEREntity {
   text: string
-  type: 'person' | 'organization' | 'place' | 'date' | 'money' | 'phone' | 'email'
+  type: 'person' | 'organization' | 'money' | 'phone' | 'email' | 'ip'
   start: number
   end: number
   confidence?: number
@@ -65,51 +65,11 @@ export function extractEntities(text: string, userCustomNames?: string[]): NEREn
     })
   })
 
-  // 3. Extract places
-  const places = doc.places()
-  places.forEach((place: ReturnType<typeof nlp>) => {
-    const placeText = place.text()
-    if (!placeText || placeText.length < 2) return
-    const indices = findAllIndices(text, placeText)
-    indices.forEach((start) => {
-      addEntity({
-        text: placeText,
-        type: 'place',
-        start,
-        end: start + placeText.length
-      })
-    })
-  })
-
-  // 4. Extract money/currency - ONLY with explicit currency symbols
+  // 3. Extract money/currency - ONLY with explicit currency symbols
   detectMoneyWithSymbols(text, addEntity)
 
-  // 5. Extract dates using regex patterns
-  const datePatterns = [
-    // ISO dates: 2024-01-15
-    /\b\d{4}-\d{2}-\d{2}\b/g,
-    // US dates: 01/15/2024 or 1/15/24
-    /\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/g,
-    // European dates: 15.01.2024
-    /\b\d{1,2}\.\d{1,2}\.\d{2,4}\b/g,
-    // Written dates: January 15, 2024 or Jan 15, 2024
-    /\b(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\.?\s+\d{1,2}(?:st|nd|rd|th)?,?\s*\d{4}\b/gi,
-    // Written dates: 15 January 2024
-    /\b\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\.?,?\s*\d{4}\b/gi
-  ]
-
-  for (const pattern of datePatterns) {
-    pattern.lastIndex = 0
-    let match: RegExpExecArray | null
-    while ((match = pattern.exec(text)) !== null) {
-      addEntity({
-        text: match[0],
-        type: 'date',
-        start: match.index,
-        end: match.index + match[0].length
-      })
-    }
-  }
+  // 4. Extract IP addresses
+  detectIPAddresses(text, addEntity)
 
   // Deduplicate entities (same position)
   const seen = new Set<string>()
@@ -194,6 +154,43 @@ function detectCustomNames(
   }
 }
 
+// Detect IP addresses (IPv4 and IPv6)
+function detectIPAddresses(
+  text: string,
+  addEntity: (entity: NEREntity) => void
+): void {
+  const ipPatterns = [
+    // IPv4: 192.168.1.1, 10.0.0.1, etc.
+    /\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b/g,
+    // IPv6 full: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+    /\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\b/g,
+    // IPv6 compressed: 2001:db8::1, ::1, fe80::
+    /\b(?:[0-9a-fA-F]{1,4}:){1,7}:|(?:[0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|(?:[0-9a-fA-F]{1,4}:){1,5}(?::[0-9a-fA-F]{1,4}){1,2}|(?:[0-9a-fA-F]{1,4}:){1,4}(?::[0-9a-fA-F]{1,4}){1,3}|(?:[0-9a-fA-F]{1,4}:){1,3}(?::[0-9a-fA-F]{1,4}){1,4}|(?:[0-9a-fA-F]{1,4}:){1,2}(?::[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:(?::[0-9a-fA-F]{1,4}){1,6}|:(?::[0-9a-fA-F]{1,4}){1,7}|::(?:[fF]{4}:)?(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b/g
+  ]
+
+  for (const pattern of ipPatterns) {
+    pattern.lastIndex = 0
+    let match: RegExpExecArray | null
+    while ((match = pattern.exec(text)) !== null) {
+      // Validate IPv4 to avoid version numbers like 1.0.0.0
+      if (match[0].includes('.') && !match[0].includes(':')) {
+        const parts = match[0].split('.')
+        // Skip if it looks like a version number (all parts are small)
+        const isVersionLike = parts.every(p => parseInt(p, 10) < 10)
+        if (isVersionLike) continue
+      }
+
+      addEntity({
+        text: match[0],
+        type: 'ip',
+        start: match.index,
+        end: match.index + match[0].length,
+        confidence: 95
+      })
+    }
+  }
+}
+
 function findAllIndices(text: string, search: string): number[] {
   // Guard against empty or invalid search strings
   if (!search || typeof search !== 'string' || search.length === 0) {
@@ -263,35 +260,3 @@ export function detectOrganizations(text: string): Array<{ text: string; start: 
   return results
 }
 
-export function detectAddresses(text: string): Array<{ text: string; start: number; end: number }> {
-  // Use NLP to find potential address patterns
-  const addressPatterns = [
-    // US style addresses
-    /\d+\s+[A-Za-z]+(?:\s+[A-Za-z]+)*(?:\s+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Court|Ct|Place|Pl|Circle|Cir))\b\.?(?:\s*,?\s*(?:Suite|Ste|Apt|Apartment|Unit|#)\s*\d+)?/gi,
-    // PO Box
-    /P\.?O\.?\s*Box\s*\d+/gi,
-    // City, State ZIP
-    /[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s*,\s*[A-Z]{2}\s+\d{5}(?:-\d{4})?/g
-  ]
-
-  const results: Array<{ text: string; start: number; end: number }> = []
-  const seen = new Set<string>()
-
-  for (const pattern of addressPatterns) {
-    let match: RegExpExecArray | null
-    pattern.lastIndex = 0
-    while ((match = pattern.exec(text)) !== null) {
-      const key = `${match.index}-${match.index + match[0].length}`
-      if (!seen.has(key)) {
-        seen.add(key)
-        results.push({
-          text: match[0],
-          start: match.index,
-          end: match.index + match[0].length
-        })
-      }
-    }
-  }
-
-  return results
-}

@@ -36,17 +36,18 @@ DocSanitizer uses a multi-layered detection system to identify and mask sensitiv
 ┌───────────────────────┐ ┌─────────────────┐ ┌─────────────────────────────┐
 │   REGEX DETECTOR      │ │  NER ENGINE     │ │   CUSTOM PATTERNS           │
 │   (detector.ts)       │ │  (ner.ts)       │ │   (User Config)             │
+│   [PRIMARY]           │ │  [SECONDARY]    │ │                             │
 │                       │ │                 │ │                             │
 │ • Email               │ │ • Person Names  │ │ • Company Name + Aliases    │
-│ • Phone Numbers       │ │ • Organizations │ │ • Internal Domains          │
-│ • National IDs        │ │ • Places        │ │ • Custom Keywords           │
-│ • Credit Cards        │ │ • Dates         │ │ • Client Names              │
-│ • IBANs               │ │ • Money         │ │ • Project Names             │
-│ • SSN                 │ │                 │ │                             │
-│ • IP Addresses        │ │ Uses:           │ │                             │
-│ • URLs/Domains        │ │ • compromise.js │ │                             │
-│ • API Keys            │ │ • Custom regex  │ │                             │
-│ • Credentials         │ │                 │ │                             │
+│ • Phone Numbers       │ │   (custom only) │ │ • Internal Domains          │
+│ • National IDs        │ │ • Organizations │ │ • Custom Keywords           │
+│ • Credit Cards        │ │ • Money (with   │ │ • Client Names              │
+│ • IBANs               │ │   symbols only) │ │ • Project Names             │
+│ • SSN                 │ │ • IP Addresses  │ │                             │
+│ • IP Addresses        │ │                 │ │                             │
+│ • URLs/Domains        │ │ Uses:           │ │                             │
+│ • API Keys            │ │ • compromise.js │ │                             │
+│ • Credentials         │ │ • Custom regex  │ │                             │
 │ • Financial Data      │ │                 │ │                             │
 └───────────────────────┘ └─────────────────┘ └─────────────────────────────┘
                     │               │               │
@@ -189,9 +190,11 @@ Primary pattern-matching engine using regular expressions with optional validato
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 2. NER-Based Detection (ner.ts)
+### 2. NER-Based Detection (ner.ts) - Secondary Engine
 
-Natural Language Processing engine using compromise.js and custom patterns.
+Natural Language Processing engine using compromise.js and custom patterns. This engine runs after the Regex engine and provides additional NLP-based detection.
+
+**Precedence Note:** The Regex engine (detector.ts) runs first as the primary detection source. NER results are merged and deduplicated based on position - if the regex engine already detected something at a position, NER won't add a duplicate.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -204,13 +207,13 @@ Natural Language Processing engine using compromise.js and custom patterns.
 │                      │   NLP Library      │                                │
 │                      └────────────────────┘                                │
 │                               │                                             │
-│              ┌────────────────┼────────────────┐                           │
-│              │                │                │                           │
-│              ▼                ▼                ▼                           │
-│     ┌──────────────┐ ┌──────────────┐ ┌──────────────┐                    │
-│     │ Organizations│ │    Places    │ │ Custom Names │                    │
-│     │ doc.orgs()   │ │ doc.places() │ │ (User List)  │                    │
-│     └──────────────┘ └──────────────┘ └──────────────┘                    │
+│              ┌────────────────┴────────────────┐                           │
+│              │                                 │                           │
+│              ▼                                 ▼                           │
+│     ┌──────────────┐                  ┌──────────────┐                    │
+│     │ Organizations│                  │ Custom Names │                    │
+│     │ doc.orgs()   │                  │ (User List)  │                    │
+│     └──────────────┘                  └──────────────┘                    │
 │                                                                             │
 │   Custom Regex ────▶ ┌────────────────────┐                                │
 │                      │  Money Patterns    │                                │
@@ -218,8 +221,8 @@ Natural Language Processing engine using compromise.js and custom patterns.
 │                      └────────────────────┘                                │
 │                               │                                             │
 │   Custom Regex ────▶ ┌────────────────────┐                                │
-│                      │  Date Patterns     │                                │
-│                      │  (multiple formats)│                                │
+│                      │  IP Address        │                                │
+│                      │  (IPv4 & IPv6)     │                                │
 │                      └────────────────────┘                                │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -361,30 +364,6 @@ The NER engine detects money **only** with explicit currency indicators:
 
 ---
 
-## Date Detection (NER)
-
-### Supported Date Formats
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         DATE FORMATS                                         │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  FORMAT              PATTERN                      EXAMPLE                   │
-│  ──────              ───────                      ───────                   │
-│  ISO                 YYYY-MM-DD                   2024-01-15                │
-│  US                  MM/DD/YYYY or M/D/YY         01/15/2024, 1/15/24       │
-│  European            DD.MM.YYYY                   15.01.2024                │
-│  Written (US)        Month DD, YYYY               January 15, 2024          │
-│  Written (abbrev)    Mon DD, YYYY                 Jan 15, 2024              │
-│  Written (EU)        DD Month YYYY                15 January 2024           │
-│  With Ordinal        Month DDth, YYYY             January 1st, 2024         │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
 ## Name Detection (NER)
 
 ### Important: Custom Names Only
@@ -425,7 +404,7 @@ The NER engine detects money **only** with explicit currency indicators:
 │  ORIGINAL TEXT:                                                             │
 │  ─────────────                                                              │
 │  "Please contact John Smith at john@acme.com. The project budget           │
-│   is $50,000 and the deadline is January 15, 2024."                        │
+│   is $50,000 and the server IP is 192.168.1.100."                          │
 │                                                                             │
 │                              │                                              │
 │                              ▼                                              │
@@ -438,7 +417,7 @@ The NER engine detects money **only** with explicit currency indicators:
 │  │ John Smith       │ pii         │ [PERSON_1]          │                  │
 │  │ john@acme.com    │ pii         │ [EMAIL_1]           │                  │
 │  │ $50,000          │ financial   │ [AMOUNT_1]          │                  │
-│  │ January 15, 2024 │ technical   │ [DATE_1]            │                  │
+│  │ 192.168.1.100    │ technical   │ [IP_ADDRESS_1]      │                  │
 │  └──────────────────┴─────────────┴─────────────────────┘                  │
 │                                                                             │
 │                              │                                              │
@@ -447,7 +426,7 @@ The NER engine detects money **only** with explicit currency indicators:
 │  SANITIZED OUTPUT:                                                          │
 │  ────────────────                                                           │
 │  "Please contact [PERSON_1] at [EMAIL_1]. The project budget               │
-│   is [AMOUNT_1] and the deadline is [DATE_1]."                             │
+│   is [AMOUNT_1] and the server IP is [IP_ADDRESS_1]."                      │
 │                                                                             │
 │                              │                                              │
 │                              ▼                                              │
@@ -458,7 +437,7 @@ The NER engine detects money **only** with explicit currency indicators:
 │    "[PERSON_1]": ["John Smith"],                                           │
 │    "[EMAIL_1]": ["john@acme.com"],                                         │
 │    "[AMOUNT_1]": ["$50,000"],                                              │
-│    "[DATE_1]": ["January 15, 2024"]                                        │
+│    "[IP_ADDRESS_1]": ["192.168.1.100"]                                     │
 │  }                                                                          │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -568,6 +547,7 @@ interface Config {
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2024 | Initial release with regex + NER detection, pure shadcn UI |
+| 1.1 | 2024 | Removed location/place detection, removed date detection, added IP address detection to NER, clarified detection engine precedence |
 
 ---
 
@@ -579,9 +559,44 @@ The detection system has been validated with:
 
 Test categories include:
 - Money with/without currency symbols
-- Names (custom vs. automatic)
-- Dates (all formats)
-- Organizations
+- Names (custom only - no automatic detection)
+- Organizations (NLP-based)
+- IP addresses (IPv4 and IPv6)
 - Plain numbers, measurements, percentages
 - Technical terms, code snippets
 - Common words that look like names
+
+## Detection Engine Precedence
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    DETECTION ENGINE PRECEDENCE                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  1. REGEX ENGINE (detector.ts) - PRIMARY                                    │
+│     ─────────────────────────────────────                                   │
+│     • Runs first                                                            │
+│     • 40+ pattern rules with validators                                     │
+│     • High precision, low false positives                                   │
+│     • Handles: PII, financial, technical, credentials                       │
+│                                                                             │
+│  2. NER ENGINE (ner.ts) - SECONDARY                                         │
+│     ────────────────────────────────────                                    │
+│     • Runs after regex engine                                               │
+│     • Uses compromise.js NLP library                                        │
+│     • Handles: Organizations, custom names, money, IP addresses             │
+│     • Results merged and deduplicated by position                           │
+│                                                                             │
+│  3. CUSTOM PATTERNS (User Config) - HIGHEST PRIORITY                        │
+│     ─────────────────────────────────────────────────                       │
+│     • User-defined names, keywords, clients, projects                       │
+│     • Always 100% confidence                                                │
+│     • Cannot be overridden by other detectors                               │
+│                                                                             │
+│  DEDUPLICATION RULE:                                                        │
+│  ───────────────────                                                        │
+│  If multiple engines detect at the same position, the first detection       │
+│  (by processing order) wins. Regex results take precedence over NER.        │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
