@@ -9,6 +9,12 @@ import {
   createMaskedPdf
 } from './services/document-parser.js'
 import { extractEntities, detectPersonNames, detectOrganizations } from './services/ner.js'
+import {
+  extractTextFromImage,
+  extractTextFromImages,
+  combineOCRResults,
+  isValidImage
+} from './services/ocr.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -69,7 +75,9 @@ ipcMain.handle('dialog:openFile', async () => {
   const result = await dialog.showOpenDialog(mainWindow!, {
     properties: ['openFile'],
     filters: [
+      { name: 'All Supported', extensions: ['txt', 'md', 'docx', 'xlsx', 'pdf', 'csv', 'json', 'html', 'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'tiff'] },
       { name: 'Documents', extensions: ['txt', 'md', 'docx', 'xlsx', 'pdf', 'csv', 'json', 'html'] },
+      { name: 'Images (OCR)', extensions: ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'tiff'] },
       { name: 'Text Files', extensions: ['txt', 'md'] },
       { name: 'Word Documents', extensions: ['docx'] },
       { name: 'Excel Files', extensions: ['xlsx', 'csv'] },
@@ -238,3 +246,62 @@ ipcMain.handle(
 ipcMain.handle('app:getVersion', () => {
   return app.getVersion()
 })
+
+// OCR - Extract text from image
+ipcMain.handle('ocr:extractText', async (_event, imageBufferBase64: string, language?: string) => {
+  try {
+    const imageBuffer = Buffer.from(imageBufferBase64, 'base64')
+
+    // Validate image
+    const valid = await isValidImage(imageBuffer)
+    if (!valid) {
+      return {
+        success: false,
+        error: 'Invalid image format'
+      }
+    }
+
+    const result = await extractTextFromImage(imageBuffer, language || 'eng')
+
+    return {
+      success: true,
+      text: result.text,
+      confidence: result.confidence,
+      words: result.words
+    }
+  } catch (error) {
+    console.error('OCR extraction error:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown OCR error'
+    }
+  }
+})
+
+// OCR - Extract text from multiple images
+ipcMain.handle(
+  'ocr:extractTextBatch',
+  async (_event, imageBuffersBase64: string[], language?: string) => {
+    try {
+      const imageBuffers = imageBuffersBase64.map((b) => Buffer.from(b, 'base64'))
+      const results = await extractTextFromImages(imageBuffers, language || 'eng')
+      const combinedText = combineOCRResults(results)
+
+      return {
+        success: true,
+        results: results.map((r) => ({
+          text: r.text,
+          confidence: r.confidence,
+          imageIndex: r.imageIndex
+        })),
+        combinedText
+      }
+    } catch (error) {
+      console.error('Batch OCR extraction error:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown OCR error'
+      }
+    }
+  }
+)

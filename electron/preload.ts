@@ -41,6 +41,29 @@ export interface MaskedDocumentResult {
   error?: string
 }
 
+export interface OCRResult {
+  success: boolean
+  text?: string
+  confidence?: number
+  words?: Array<{
+    text: string
+    confidence: number
+    bbox: { x0: number; y0: number; x1: number; y1: number }
+  }>
+  error?: string
+}
+
+export interface OCRBatchResult {
+  success: boolean
+  results?: Array<{
+    text: string
+    confidence: number
+    imageIndex: number
+  }>
+  combinedText?: string
+  error?: string
+}
+
 const api = {
   // File operations
   openFile: (): Promise<FileData | null> => ipcRenderer.invoke('dialog:openFile'),
@@ -62,6 +85,12 @@ const api = {
   // NER extraction
   extractEntities: (text: string): Promise<NERResult> =>
     ipcRenderer.invoke('ner:extract', text),
+
+  // OCR
+  ocrExtractText: (imageBufferBase64: string, language?: string): Promise<OCRResult> =>
+    ipcRenderer.invoke('ocr:extractText', imageBufferBase64, language),
+  ocrExtractTextBatch: (imageBuffersBase64: string[], language?: string): Promise<OCRBatchResult> =>
+    ipcRenderer.invoke('ocr:extractTextBatch', imageBuffersBase64, language),
 
   // App info
   getVersion: (): Promise<string> => ipcRenderer.invoke('app:getVersion'),

@@ -24,7 +24,9 @@ export default defineConfig({
                 'pdf-parse',
                 'pdf-lib',
                 'docx',
-                'compromise'
+                'compromise',
+                'tesseract.js',
+                'sharp'
               ]
             }
           }

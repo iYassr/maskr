@@ -3,7 +3,8 @@ import { useDocumentStore } from '../stores/documentStore'
 import { useConfigStore } from '../stores/configStore'
 import { detectSensitiveInfo, calculateStats } from '../lib/detector'
 
-const SUPPORTED_FORMATS = ['txt', 'md', 'docx', 'xlsx', 'csv', 'pdf', 'json', 'html']
+const SUPPORTED_FORMATS = ['txt', 'md', 'docx', 'xlsx', 'csv', 'pdf', 'json', 'html', 'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'tiff']
+const IMAGE_FORMATS = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'tiff']
 
 export function FileUploader() {
   const [isDragging, setIsDragging] = useState(false)
@@ -52,8 +53,32 @@ export function FileUploader() {
     setIsProcessing(true)
 
     try {
+      // Handle image files with OCR
+      if (IMAGE_FORMATS.includes(fileData.extension)) {
+        const ocrResult = await window.api.ocrExtractText(fileData.buffer)
+
+        if (!ocrResult.success) {
+          setError(ocrResult.error || 'Failed to extract text from image')
+          setIsProcessing(false)
+          return
+        }
+
+        const content = ocrResult.text || ''
+        const confidence = ocrResult.confidence || 0
+
+        setFile({
+          filePath: fileData.filePath,
+          fileName: fileData.fileName,
+          extension: fileData.extension,
+          buffer: fileData.buffer,
+          size: atob(fileData.buffer).length,
+          content: `[OCR extracted text - Confidence: ${confidence.toFixed(1)}%]\n\n${content}`
+        })
+
+        await processContent(content, fileData.fileName)
+      }
       // Use the document parser API for complex formats
-      if (['docx', 'xlsx', 'pdf'].includes(fileData.extension)) {
+      else if (['docx', 'xlsx', 'pdf'].includes(fileData.extension)) {
         const parsed = await window.api.parseDocument(fileData.filePath || fileData.fileName, fileData.buffer)
 
         if (!parsed.success) {

@@ -119,10 +119,21 @@ async function parseCsv(buffer: Buffer): Promise<ParsedDocument> {
 }
 
 async function parsePdf(buffer: Buffer): Promise<ParsedDocument> {
+  const images: ParsedDocument['images'] = []
+
   // Use dynamic import for pdf-parse as it has issues with ESM
   try {
     const pdfParse = (await import('pdf-parse')).default
     const data = await pdfParse(buffer)
+
+    // Try to extract embedded images using pdf-lib
+    try {
+      const pdfDoc = await PDFDocument.load(buffer, { ignoreEncryption: true })
+      // Note: pdf-lib doesn't provide easy image extraction
+      // Images would need more complex parsing - for now we note if there might be images
+    } catch {
+      // Ignore image extraction errors
+    }
 
     return {
       content: data.text,
@@ -131,14 +142,15 @@ async function parsePdf(buffer: Buffer): Promise<ParsedDocument> {
         pages: data.numpages,
         title: data.info?.Title,
         author: data.info?.Author
-      }
+      },
+      images: images.length > 0 ? images : undefined
     }
   } catch (error) {
     // Fallback: try to extract what we can from the PDF
     console.error('PDF parsing error:', error)
 
     // Try using pdf-lib as a fallback for basic text
-    const pdfDoc = await PDFDocument.load(buffer)
+    const pdfDoc = await PDFDocument.load(buffer, { ignoreEncryption: true })
     const pages = pdfDoc.getPages()
 
     return {

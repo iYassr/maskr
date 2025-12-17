@@ -50,6 +50,29 @@ interface MaskedDocumentResult {
   error?: string
 }
 
+interface OCRResult {
+  success: boolean
+  text?: string
+  confidence?: number
+  words?: Array<{
+    text: string
+    confidence: number
+    bbox: { x0: number; y0: number; x1: number; y1: number }
+  }>
+  error?: string
+}
+
+interface OCRBatchResult {
+  success: boolean
+  results?: Array<{
+    text: string
+    confidence: number
+    imageIndex: number
+  }>
+  combinedText?: string
+  error?: string
+}
+
 interface Window {
   api: {
     openFile: () => Promise<FileData | null>
@@ -58,6 +81,8 @@ interface Window {
     parseDocument: (filePath: string, bufferBase64: string) => Promise<ParsedDocument>
     createMaskedDocument: (originalBufferBase64: string, maskedContent: string, format: string) => Promise<MaskedDocumentResult>
     extractEntities: (text: string) => Promise<NERResult>
+    ocrExtractText: (imageBufferBase64: string, language?: string) => Promise<OCRResult>
+    ocrExtractTextBatch: (imageBuffersBase64: string[], language?: string) => Promise<OCRBatchResult>
     getVersion: () => Promise<string>
     platform: NodeJS.Platform
   }
