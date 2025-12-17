@@ -1,9 +1,7 @@
 import nlp from 'compromise'
 import {
   isKnownFirstName,
-  isKnownArabicFamilyName,
-  isNamePrefix,
-  ALL_FIRST_NAMES
+  isKnownArabicFamilyName
 } from './names-dictionary'
 
 export interface NEREntity {
@@ -22,6 +20,11 @@ export function setCustomNames(names: string[]): void {
 }
 
 export function extractEntities(text: string, userCustomNames?: string[]): NEREntity[] {
+  // Guard against invalid input
+  if (!text || typeof text !== 'string') {
+    return []
+  }
+
   // Update custom names if provided
   if (userCustomNames) {
     setCustomNames(userCustomNames)
@@ -31,8 +34,15 @@ export function extractEntities(text: string, userCustomNames?: string[]): NEREn
   const entities: NEREntity[] = []
   const seenPositions = new Set<string>()
 
-  // Helper to add entity if not duplicate
+  // Helper to add entity if not duplicate and valid
   const addEntity = (entity: NEREntity) => {
+    // Validate entity before adding
+    if (!entity || !entity.text || entity.text.length === 0) return
+    if (typeof entity.start !== 'number' || typeof entity.end !== 'number') return
+    if (!Number.isFinite(entity.start) || !Number.isFinite(entity.end)) return
+    if (entity.start < 0 || entity.end <= entity.start) return
+    if (entity.start >= text.length || entity.end > text.length) return
+
     const key = `${entity.start}-${entity.end}`
     if (!seenPositions.has(key)) {
       seenPositions.add(key)
@@ -44,6 +54,7 @@ export function extractEntities(text: string, userCustomNames?: string[]): NEREn
   const people = doc.people()
   people.forEach((person: ReturnType<typeof nlp>) => {
     const personText = person.text()
+    if (!personText || personText.length < 2) return // Skip empty or single-char results
     const indices = findAllIndices(text, personText)
     indices.forEach((start) => {
       addEntity({
@@ -69,9 +80,10 @@ export function extractEntities(text: string, userCustomNames?: string[]): NEREn
   const orgs = doc.organizations()
   orgs.forEach((org: ReturnType<typeof nlp>) => {
     const orgText = org.text()
+    if (!orgText || orgText.length < 2) return
     const indices = findAllIndices(text, orgText)
     indices.forEach((start) => {
-      entities.push({
+      addEntity({
         text: orgText,
         type: 'organization',
         start,
@@ -84,9 +96,10 @@ export function extractEntities(text: string, userCustomNames?: string[]): NEREn
   const places = doc.places()
   places.forEach((place: ReturnType<typeof nlp>) => {
     const placeText = place.text()
+    if (!placeText || placeText.length < 2) return
     const indices = findAllIndices(text, placeText)
     indices.forEach((start) => {
-      entities.push({
+      addEntity({
         text: placeText,
         type: 'place',
         start,
@@ -99,9 +112,10 @@ export function extractEntities(text: string, userCustomNames?: string[]): NEREn
   const money = doc.money()
   money.forEach((m: ReturnType<typeof nlp>) => {
     const moneyText = m.text()
+    if (!moneyText || moneyText.length < 1) return
     const indices = findAllIndices(text, moneyText)
     indices.forEach((start) => {
-      entities.push({
+      addEntity({
         text: moneyText,
         type: 'money',
         start,
@@ -114,9 +128,10 @@ export function extractEntities(text: string, userCustomNames?: string[]): NEREn
   const dates = doc.dates()
   dates.forEach((d: ReturnType<typeof nlp>) => {
     const dateText = d.text()
+    if (!dateText || dateText.length < 1) return
     const indices = findAllIndices(text, dateText)
     indices.forEach((start) => {
-      entities.push({
+      addEntity({
         text: dateText,
         type: 'date',
         start,
@@ -167,7 +182,7 @@ function detectDictionaryNames(
         const contextBefore = text.slice(contextStart, match.index).toLowerCase()
 
         // Only add if there's a name indicator before it or it's clearly a name context
-        const hasNameContext = /(?:mr|mrs|ms|dr|dear|hi|hello|from|to|by|name|contact|author|signed)\s*[:\.]?\s*$/i.test(contextBefore)
+        const hasNameContext = /(?:mr|mrs|ms|dr|dear|hi|hello|from|to|by|name|contact|author|signed)\s*[:.]?\s*$/i.test(contextBefore)
 
         if (hasNameContext) {
           addEntity({
@@ -258,11 +273,24 @@ function detectCustomNames(
 }
 
 function findAllIndices(text: string, search: string): number[] {
+  // Guard against empty or invalid search strings
+  if (!search || typeof search !== 'string' || search.length === 0) {
+    return []
+  }
+  if (!text || typeof text !== 'string') {
+    return []
+  }
+
   const indices: number[] = []
   let idx = text.indexOf(search)
-  while (idx !== -1) {
+  // Limit iterations to prevent infinite loops
+  const maxIterations = 10000
+  let iterations = 0
+
+  while (idx !== -1 && iterations < maxIterations) {
     indices.push(idx)
     idx = text.indexOf(search, idx + 1)
+    iterations++
   }
   return indices
 }

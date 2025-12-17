@@ -1,7 +1,6 @@
 import mammoth from 'mammoth'
 import ExcelJS from 'exceljs'
 import { PDFDocument } from 'pdf-lib'
-import fs from 'fs/promises'
 import path from 'path'
 
 export interface ParsedDocument {
@@ -57,7 +56,7 @@ async function parseDocx(buffer: Buffer): Promise<ParsedDocument> {
 
   // Try to also extract images
   try {
-    const imageResult = await mammoth.convertToHtml({
+    await mammoth.convertToHtml({
       buffer,
       convertImage: mammoth.images.imgElement(async (image) => {
         const imageBuffer = await image.read()
@@ -88,11 +87,11 @@ async function parseXlsx(buffer: Buffer): Promise<ParsedDocument> {
   const sheets: string[] = []
   const contentParts: string[] = []
 
-  workbook.eachSheet((worksheet, sheetId) => {
+  workbook.eachSheet((worksheet, _sheetId) => {
     sheets.push(worksheet.name)
     contentParts.push(`--- Sheet: ${worksheet.name} ---\n`)
 
-    worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+    worksheet.eachRow({ includeEmpty: false }, (row, _rowNumber) => {
       const values = row.values as (string | number | boolean | Date | null | undefined)[]
       // Excel rows are 1-indexed, values array is 1-indexed as well
       const rowValues = values.slice(1).map((cell) => {
@@ -128,7 +127,7 @@ async function parsePdf(buffer: Buffer): Promise<ParsedDocument> {
 
     // Try to extract embedded images using pdf-lib
     try {
-      const pdfDoc = await PDFDocument.load(buffer, { ignoreEncryption: true })
+      await PDFDocument.load(buffer, { ignoreEncryption: true })
       // Note: pdf-lib doesn't provide easy image extraction
       // Images would need more complex parsing - for now we note if there might be images
     } catch {
@@ -232,11 +231,10 @@ export async function createMaskedXlsx(
   const worksheet = workbook.addWorksheet('Sanitized')
 
   const lines = maskedContent.split('\n')
-  let currentSheet = ''
 
   for (const line of lines) {
     if (line.startsWith('--- Sheet:')) {
-      currentSheet = line.replace('--- Sheet:', '').replace('---', '').trim()
+      // Skip sheet header lines
       continue
     }
 

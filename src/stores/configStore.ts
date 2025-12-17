@@ -59,6 +59,8 @@ interface ConfigState {
   removeAlias: (alias: string) => void
   addName: (name: string) => void
   removeName: (name: string) => void
+  addInternalDomain: (domain: string) => void
+  removeInternalDomain: (domain: string) => void
   toggleCategory: (category: DetectionCategory) => void
   resetConfig: () => void
 }
@@ -210,6 +212,35 @@ export const useConfigStore = create<ConfigState>()(
             customEntities: {
               ...state.config.customEntities,
               names: state.config.customEntities.names.filter((n) => n !== name)
+            }
+          }
+        })),
+
+      addInternalDomain: (domain) =>
+        set((state) => {
+          const sanitized = sanitizeString(domain, 253).toLowerCase()
+          if (!sanitized) return state
+          if (isDuplicateEntry(state.config.companyInfo.internalDomains, sanitized)) return state
+          if (state.config.companyInfo.internalDomains.length >= MAX_ARRAY_SIZE) return state
+
+          return {
+            config: {
+              ...state.config,
+              companyInfo: {
+                ...state.config.companyInfo,
+                internalDomains: [...state.config.companyInfo.internalDomains, sanitized]
+              }
+            }
+          }
+        }),
+
+      removeInternalDomain: (domain) =>
+        set((state) => ({
+          config: {
+            ...state.config,
+            companyInfo: {
+              ...state.config.companyInfo,
+              internalDomains: state.config.companyInfo.internalDomains.filter((d) => d !== domain)
             }
           }
         })),
