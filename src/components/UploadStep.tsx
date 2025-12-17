@@ -1,6 +1,8 @@
 import { useState, useCallback, useRef } from 'react'
 import { useDocumentStore } from '../stores/documentStore'
 import type { Detection, DetectionCategory } from '../types'
+import { Spinner } from './ui/spinner'
+import { Upload, FileText, Shield, User, Building2, DollarSign, Cpu, Key, CheckCircle } from 'lucide-react'
 
 const SUPPORTED_EXTENSIONS = ['.pdf', '.docx', '.doc', '.xlsx', '.xls', '.csv', '.txt', '.md']
 
@@ -28,28 +30,6 @@ function generatePlaceholder(type: string, index: number): string {
   }
   return `[${prefixes[type] || 'REDACTED'}_${index + 1}]`
 }
-
-// Icons
-const UploadIcon = () => (
-  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-    <polyline points="17 8 12 3 7 8" />
-    <line x1="12" y1="3" x2="12" y2="15" />
-  </svg>
-)
-
-const FileIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-    <polyline points="14 2 14 8 20 8" />
-  </svg>
-)
-
-const CheckIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-)
 
 interface UploadStepProps {
   onFileUploaded: () => void
@@ -224,7 +204,7 @@ export function UploadStep({ onFileUploaded }: UploadStepProps) {
   }, [])
 
   return (
-    <div className="flex flex-col items-center justify-center h-full px-8 animate-in">
+    <div className="flex h-full">
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
@@ -234,107 +214,137 @@ export function UploadStep({ onFileUploaded }: UploadStepProps) {
         className="hidden"
       />
 
-      {/* Drop zone */}
-      <div
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onClick={!isProcessing ? handleBrowseClick : undefined}
-        className={`
-          relative w-full max-w-lg aspect-[4/3] rounded-2xl border-2 border-dashed
-          flex flex-col items-center justify-center gap-4
-          ${!isProcessing ? 'cursor-pointer' : 'cursor-wait'}
-          ${isDragging ? 'drop-zone-active' : 'drop-zone-idle'}
-          ${isProcessing ? 'pointer-events-none opacity-80' : ''}
-        `}
-        style={{ borderColor: 'var(--border-strong)' }}
-      >
-        {isProcessing ? (
-          <>
-            {/* Processing animation */}
-            <div className="w-12 h-12 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
-            <p className="text-[var(--text-secondary)] text-sm">{processingStatus}</p>
-          </>
-        ) : (
-          <>
-            <div className="text-[var(--accent)]">
-              <UploadIcon />
-            </div>
-            <div className="text-center">
-              <p className="text-[var(--text-primary)] font-medium mb-1">
-                Drop your document here
-              </p>
-              <p className="text-[var(--text-muted)] text-sm">
-                or click to browse
-              </p>
-            </div>
-          </>
+      {/* Left side - Drop zone */}
+      <div className="flex-1 flex flex-col items-center justify-center p-8 border-r border-border">
+        <div
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onClick={!isProcessing ? handleBrowseClick : undefined}
+          className={`
+            relative w-full max-w-sm aspect-square rounded-xl border-2 border-dashed
+            flex flex-col items-center justify-center gap-4 p-8 transition-all
+            ${!isProcessing ? 'cursor-pointer' : 'cursor-wait'}
+            ${isDragging
+              ? 'border-primary bg-primary/5 scale-[1.02]'
+              : 'border-border hover:border-muted-foreground hover:bg-muted/30'
+            }
+            ${isProcessing ? 'pointer-events-none opacity-80' : ''}
+          `}
+        >
+          {isProcessing ? (
+            <>
+              <Spinner className="h-12 w-12" />
+              <p className="text-muted-foreground text-center">{processingStatus}</p>
+            </>
+          ) : (
+            <>
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                <Upload className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-medium text-foreground">
+                  Drop file here
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  or click to browse
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Error message */}
+        {error && (
+          <div className="mt-4 px-4 py-3 rounded-lg bg-destructive/10 border border-destructive/20 max-w-sm w-full">
+            <p className="text-sm text-destructive">{error}</p>
+          </div>
         )}
-      </div>
 
-      {/* Error message */}
-      {error && (
-        <div className="mt-4 px-4 py-3 rounded-lg bg-[var(--cat-pii-bg)] border border-[var(--cat-pii)] text-[var(--cat-pii)] text-sm animate-in">
-          {error}
-        </div>
-      )}
-
-      {/* Supported formats */}
-      <div className="mt-8 animate-in animate-delay-1">
-        <p className="text-[var(--text-muted)] text-xs mb-3 text-center">Supported formats</p>
-        <div className="flex flex-wrap justify-center gap-2">
-          {SUPPORTED_EXTENSIONS.map((ext) => (
-            <span
-              key={ext}
-              className="px-2 py-1 rounded text-xs font-mono"
-              style={{
-                background: 'var(--bg-tertiary)',
-                color: 'var(--text-secondary)'
-              }}
-            >
-              {ext}
-            </span>
-          ))}
+        {/* Supported formats */}
+        <div className="mt-6">
+          <div className="flex flex-wrap justify-center gap-1.5">
+            {SUPPORTED_EXTENSIONS.map((ext) => (
+              <span
+                key={ext}
+                className="px-2 py-0.5 rounded text-xs font-mono bg-muted text-muted-foreground"
+              >
+                {ext}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Features */}
-      <div className="mt-12 grid grid-cols-3 gap-8 max-w-2xl animate-in animate-delay-2">
-        <Feature
-          icon={<FileIcon />}
-          title="Parse"
-          description="Extract text from PDF, Word, Excel"
-        />
-        <Feature
-          icon={<SearchIcon />}
-          title="Detect"
-          description="Find names, emails, phone numbers"
-        />
-        <Feature
-          icon={<CheckIcon />}
-          title="Sanitize"
-          description="Mask sensitive data securely"
-        />
+      {/* Right side - Info panel */}
+      <div className="w-96 flex flex-col p-8 bg-muted/20">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Shield className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold text-foreground">DocSanitizer</h1>
+            <p className="text-sm text-muted-foreground">Protect your data</p>
+          </div>
+        </div>
+
+        <p className="text-muted-foreground mb-8">
+          Automatically detect and mask sensitive information before sharing documents with AI tools or third parties.
+        </p>
+
+        <div className="space-y-4 flex-1">
+          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            What we detect
+          </h3>
+
+          <FeatureItem
+            icon={<User className="h-4 w-4" />}
+            title="Personal Information"
+            description="Names, emails, phone numbers, addresses"
+          />
+          <FeatureItem
+            icon={<Building2 className="h-4 w-4" />}
+            title="Company Data"
+            description="Organization names, business details"
+          />
+          <FeatureItem
+            icon={<DollarSign className="h-4 w-4" />}
+            title="Financial Information"
+            description="Account numbers, amounts, transactions"
+          />
+          <FeatureItem
+            icon={<Cpu className="h-4 w-4" />}
+            title="Technical Details"
+            description="IP addresses, server names, configurations"
+          />
+          <FeatureItem
+            icon={<Key className="h-4 w-4" />}
+            title="Credentials"
+            description="API keys, passwords, tokens"
+          />
+        </div>
+
+        <div className="pt-6 border-t border-border mt-auto">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <CheckCircle className="h-4 w-4 text-green-500" />
+            <span>100% local processing - your data never leaves your device</span>
+          </div>
+        </div>
       </div>
     </div>
   )
 }
 
-function Feature({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+function FeatureItem({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
-    <div className="text-center">
-      <div className="w-10 h-10 mx-auto mb-3 rounded-lg flex items-center justify-center text-[var(--accent)]" style={{ background: 'var(--accent-glow)' }}>
+    <div className="flex items-start gap-3">
+      <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center text-muted-foreground flex-shrink-0">
         {icon}
       </div>
-      <h3 className="font-display text-sm font-medium text-[var(--text-primary)] mb-1">{title}</h3>
-      <p className="text-xs text-[var(--text-muted)]">{description}</p>
+      <div>
+        <h4 className="text-sm font-medium text-foreground">{title}</h4>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
     </div>
   )
 }
-
-const SearchIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8" />
-    <path d="m21 21-4.3-4.3" />
-  </svg>
-)

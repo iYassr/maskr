@@ -3,6 +3,7 @@ import { useDocumentStore } from './stores/documentStore'
 import { UploadStep } from './components/UploadStep'
 import { ReviewStep } from './components/ReviewStep'
 import { ExportStep } from './components/ExportStep'
+import { Check } from 'lucide-react'
 
 type Step = 'upload' | 'review' | 'export'
 
@@ -41,17 +42,11 @@ export default function App() {
   const getCurrentStepIndex = () => STEPS.findIndex(s => s.id === currentStep)
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen bg-background text-foreground">
       {/* Header with step indicator */}
-      <header
-        className="flex-shrink-0 titlebar-drag-region"
-        style={{
-          background: 'var(--bg-secondary)',
-          borderBottom: '1px solid var(--border)'
-        }}
-      >
+      <header className="flex-shrink-0 titlebar-drag-region bg-muted border-b border-border">
         {/* Drag area for window */}
-        <div className="h-8 flex items-center justify-center">
+        <div className="h-10 flex items-center justify-center">
           <div className="titlebar-no-drag flex items-center gap-6 px-4">
             {STEPS.map((step, index) => {
               const isActive = step.id === currentStep
@@ -66,34 +61,28 @@ export default function App() {
                       className={`
                         w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium
                         transition-all duration-300
-                        ${isActive ? 'step-active' : ''}
-                      `}
-                      style={{
-                        background: isActive
-                          ? 'var(--accent)'
+                        ${isActive
+                          ? 'bg-primary text-primary-foreground'
                           : isCompleted
-                            ? 'var(--accent-dim)'
-                            : 'var(--bg-tertiary)',
-                        color: isActive || isCompleted
-                          ? 'var(--bg-primary)'
-                          : 'var(--text-muted)'
-                      }}
+                            ? 'bg-primary/60 text-primary-foreground'
+                            : 'bg-secondary text-muted-foreground'
+                        }
+                      `}
                     >
                       {isCompleted ? (
-                        <CheckIcon />
+                        <Check className="h-3 w-3" />
                       ) : (
                         step.number
                       )}
                     </div>
                     <span
-                      className="text-sm font-medium"
-                      style={{
-                        color: isActive
-                          ? 'var(--text-primary)'
+                      className={`text-sm font-medium ${
+                        isActive
+                          ? 'text-foreground'
                           : isPast
-                            ? 'var(--text-secondary)'
-                            : 'var(--text-muted)'
-                      }}
+                            ? 'text-muted-foreground'
+                            : 'text-muted-foreground/60'
+                      }`}
                     >
                       {step.label}
                     </span>
@@ -102,12 +91,9 @@ export default function App() {
                   {/* Connector line */}
                   {index < STEPS.length - 1 && (
                     <div
-                      className="w-12 h-px"
-                      style={{
-                        background: isPast
-                          ? 'var(--accent-dim)'
-                          : 'var(--border-strong)'
-                      }}
+                      className={`w-12 h-px ${
+                        isPast ? 'bg-primary/60' : 'bg-border'
+                      }`}
                     />
                   )}
                 </div>
@@ -137,25 +123,10 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer
-        className="flex-shrink-0 px-4 py-2 flex items-center justify-between text-xs"
-        style={{
-          background: 'var(--bg-secondary)',
-          borderTop: '1px solid var(--border)',
-          color: 'var(--text-muted)'
-        }}
-      >
+      <footer className="flex-shrink-0 px-4 py-2 flex items-center justify-between text-xs bg-muted border-t border-border text-muted-foreground">
         <span>DocSanitizer v1.0</span>
         <span>Secure document sanitization</span>
       </footer>
     </div>
-  )
-}
-
-function CheckIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
   )
 }

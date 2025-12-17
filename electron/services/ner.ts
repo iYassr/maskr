@@ -1,8 +1,4 @@
 import nlp from 'compromise'
-import {
-  isKnownFirstName,
-  isKnownArabicFamilyName
-} from './names-dictionary'
 
 export interface NEREntity {
   text: string
@@ -12,7 +8,7 @@ export interface NEREntity {
   confidence?: number
 }
 
-// Custom names that users can add
+// Custom names that users can add - ONLY these names will be detected as persons
 let customNames: Set<string> = new Set()
 
 export function setCustomNames(names: string[]): void {
@@ -50,33 +46,10 @@ export function extractEntities(text: string, userCustomNames?: string[]): NEREn
     }
   }
 
-  // 1. Extract people names using Compromise NLP
-  const people = doc.people()
-  people.forEach((person: ReturnType<typeof nlp>) => {
-    const personText = person.text()
-    if (!personText || personText.length < 2) return // Skip empty or single-char results
-    const indices = findAllIndices(text, personText)
-    indices.forEach((start) => {
-      addEntity({
-        text: personText,
-        type: 'person',
-        start,
-        end: start + personText.length,
-        confidence: 75
-      })
-    })
-  })
-
-  // 2. Dictionary-based name detection
-  detectDictionaryNames(text, addEntity)
-
-  // 3. Contextual name detection (names after titles/prefixes)
-  detectContextualNames(text, addEntity)
-
-  // 4. Custom user-defined names
+  // 1. ONLY detect custom user-defined names (no automatic name detection)
   detectCustomNames(text, addEntity)
 
-  // Extract organizations
+  // 2. Extract organizations
   const orgs = doc.organizations()
   orgs.forEach((org: ReturnType<typeof nlp>) => {
     const orgText = org.text()
@@ -92,7 +65,7 @@ export function extractEntities(text: string, userCustomNames?: string[]): NEREn
     })
   })
 
-  // Extract places
+  // 3. Extract places
   const places = doc.places()
   places.forEach((place: ReturnType<typeof nlp>) => {
     const placeText = place.text()
@@ -108,37 +81,35 @@ export function extractEntities(text: string, userCustomNames?: string[]): NEREn
     })
   })
 
-  // Extract money/currency mentions
-  const money = doc.money()
-  money.forEach((m: ReturnType<typeof nlp>) => {
-    const moneyText = m.text()
-    if (!moneyText || moneyText.length < 1) return
-    const indices = findAllIndices(text, moneyText)
-    indices.forEach((start) => {
-      addEntity({
-        text: moneyText,
-        type: 'money',
-        start,
-        end: start + moneyText.length
-      })
-    })
-  })
+  // 4. Extract money/currency - ONLY with explicit currency symbols
+  detectMoneyWithSymbols(text, addEntity)
 
-  // Extract dates
-  const dates = doc.dates()
-  dates.forEach((d: ReturnType<typeof nlp>) => {
-    const dateText = d.text()
-    if (!dateText || dateText.length < 1) return
-    const indices = findAllIndices(text, dateText)
-    indices.forEach((start) => {
+  // 5. Extract dates using regex patterns
+  const datePatterns = [
+    // ISO dates: 2024-01-15
+    /\b\d{4}-\d{2}-\d{2}\b/g,
+    // US dates: 01/15/2024 or 1/15/24
+    /\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/g,
+    // European dates: 15.01.2024
+    /\b\d{1,2}\.\d{1,2}\.\d{2,4}\b/g,
+    // Written dates: January 15, 2024 or Jan 15, 2024
+    /\b(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\.?\s+\d{1,2}(?:st|nd|rd|th)?,?\s*\d{4}\b/gi,
+    // Written dates: 15 January 2024
+    /\b\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\.?,?\s*\d{4}\b/gi
+  ]
+
+  for (const pattern of datePatterns) {
+    pattern.lastIndex = 0
+    let match: RegExpExecArray | null
+    while ((match = pattern.exec(text)) !== null) {
       addEntity({
-        text: dateText,
+        text: match[0],
         type: 'date',
-        start,
-        end: start + dateText.length
+        start: match.index,
+        end: match.index + match[0].length
       })
-    })
-  })
+    }
+  }
 
   // Deduplicate entities (same position)
   const seen = new Set<string>()
@@ -152,102 +123,53 @@ export function extractEntities(text: string, userCustomNames?: string[]): NEREn
   return uniqueEntities.sort((a, b) => a.start - b.start)
 }
 
-// Detect names from dictionary (capitalized words that match known names)
-function detectDictionaryNames(
+// Detect money ONLY when it has explicit currency symbols
+function detectMoneyWithSymbols(
   text: string,
   addEntity: (entity: NEREntity) => void
 ): void {
-  // Match capitalized words (potential names)
-  const capitalizedWordPattern = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b/g
-  let match: RegExpExecArray | null
-
-  while ((match = capitalizedWordPattern.exec(text)) !== null) {
-    const potentialName = match[1]
-    const words = potentialName.split(/\s+/)
-
-    // Check if any word is a known first name
-    const hasKnownFirstName = words.some(w => isKnownFirstName(w))
-
-    // Check for Arabic full name pattern (FirstName + Al/El family name)
-    const hasArabicPattern = words.length >= 2 &&
-      isKnownFirstName(words[0]) &&
-      (words.some(w => w.toLowerCase().startsWith('al') || w.toLowerCase().startsWith('el')) ||
-       words.some(w => isKnownArabicFamilyName(w)))
-
-    if (hasKnownFirstName || hasArabicPattern) {
-      // For single known first names, require additional context or be more conservative
-      if (words.length === 1) {
-        // Single word - check surrounding context for name indicators
-        const contextStart = Math.max(0, match.index - 50)
-        const contextBefore = text.slice(contextStart, match.index).toLowerCase()
-
-        // Only add if there's a name indicator before it or it's clearly a name context
-        const hasNameContext = /(?:mr|mrs|ms|dr|dear|hi|hello|from|to|by|name|contact|author|signed)\s*[:.]?\s*$/i.test(contextBefore)
-
-        if (hasNameContext) {
-          addEntity({
-            text: potentialName,
-            type: 'person',
-            start: match.index,
-            end: match.index + potentialName.length,
-            confidence: 85
-          })
-        }
-      } else {
-        // Multi-word names with known first name - higher confidence
-        addEntity({
-          text: potentialName,
-          type: 'person',
-          start: match.index,
-          end: match.index + potentialName.length,
-          confidence: hasArabicPattern ? 90 : 80
-        })
-      }
-    }
-  }
-}
-
-// Detect names after title prefixes (Mr., Dr., Dear, etc.)
-function detectContextualNames(
-  text: string,
-  addEntity: (entity: NEREntity) => void
-): void {
-  // Pattern: Title/prefix followed by capitalized name(s)
-  const contextualPatterns = [
-    // Mr./Mrs./Ms./Dr. followed by name
-    /\b(?:Mr|Mrs|Ms|Miss|Dr|Prof|Eng|Sir|Madam|Sheikh|Prince|Princess)\.?\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/gi,
-    // Dear/Hi/Hello followed by name
-    /\b(?:Dear|Hi|Hello|Hey)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/gi,
-    // "Name:" or "Contact:" or "Author:" followed by name
-    /\b(?:Name|Contact|Author|Prepared by|Submitted by|From|To|Attn|Attention|Signed|Regards|Sincerely)[:\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/gi,
-    // Email signature patterns: name at end of line before email
-    /\n([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\s*\n.*?@/g
+  // Currency patterns that require explicit symbols
+  const moneyPatterns = [
+    // Dollar: $100, $1,000.00, $1.5M, $1.5 million
+    /\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi,
+    // Euro: €100, 100€, EUR 100
+    /€\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi,
+    /\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?€/g,
+    /EUR\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi,
+    // Pound: £100, GBP 100
+    /(?:£\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?|GBP\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi,
+    // SAR: SAR 100, 100 SAR, SR 100, 100 SR
+    /(?:SAR\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?|\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?\s*SAR|SR\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?|\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?\s*SR)(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi,
+    // AED: AED 100, 100 AED
+    /(?:AED\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?|\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?\s*AED)(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi,
+    // USD explicit: USD 100, 100 USD
+    /(?:USD\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?|\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?\s*USD)(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi,
+    // Yen: ¥100, JPY 100
+    /(?:¥\s*\d{1,3}(?:,\d{3})*|\d{1,3}(?:,\d{3})*\s*¥|JPY\s*\d{1,3}(?:,\d{3})*)(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi,
+    // Indian Rupee: ₹100, INR 100
+    /(?:₹\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?|INR\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi,
+    // Swiss Franc: CHF 100
+    /CHF\s*\d{1,3}(?:[',]\d{3})*(?:\.\d{1,2})?(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi,
+    // Generic with currency word: 100 dollars, 50 euros, 1000 riyals
+    /\d+(?:,\d{3})*(?:\.\d{1,2})?\s*(?:dollars?|euros?|pounds?|riyals?|dirhams?|yen|rupees?)(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi
   ]
 
-  for (const pattern of contextualPatterns) {
+  for (const pattern of moneyPatterns) {
     pattern.lastIndex = 0
     let match: RegExpExecArray | null
-
     while ((match = pattern.exec(text)) !== null) {
-      const name = match[1]
-      if (name && name.length >= 2) {
-        // Find the actual position of the name in the match
-        const nameStart = text.indexOf(name, match.index)
-        if (nameStart !== -1) {
-          addEntity({
-            text: name,
-            type: 'person',
-            start: nameStart,
-            end: nameStart + name.length,
-            confidence: 90 // High confidence for contextual matches
-          })
-        }
-      }
+      addEntity({
+        text: match[0],
+        type: 'money',
+        start: match.index,
+        end: match.index + match[0].length,
+        confidence: 95
+      })
     }
   }
 }
 
-// Detect custom user-defined names
+// Detect ONLY custom user-defined names
 function detectCustomNames(
   text: string,
   addEntity: (entity: NEREntity) => void
@@ -297,24 +219,24 @@ function findAllIndices(text: string, search: string): number[] {
 
 // Additional NER-based detection for specific entity types
 export function detectPersonNames(text: string): Array<{ text: string; start: number; end: number }> {
-  const doc = nlp(text)
+  // Only return custom names now
   const results: Array<{ text: string; start: number; end: number }> = []
 
-  const people = doc.people()
-  people.forEach((person: ReturnType<typeof nlp>) => {
-    const personText = person.text()
-    if (personText.length >= 2) {
-      // Filter out single letters
-      const indices = findAllIndices(text, personText)
-      indices.forEach((start) => {
-        results.push({
-          text: personText,
-          start,
-          end: start + personText.length
-        })
+  if (customNames.size === 0) return results
+
+  for (const name of customNames) {
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const pattern = new RegExp(`\\b${escapedName}\\b`, 'gi')
+
+    let match: RegExpExecArray | null
+    while ((match = pattern.exec(text)) !== null) {
+      results.push({
+        text: match[0],
+        start: match.index,
+        end: match.index + match[0].length
       })
     }
-  })
+  }
 
   return results
 }
@@ -343,7 +265,6 @@ export function detectOrganizations(text: string): Array<{ text: string; start: 
 
 export function detectAddresses(text: string): Array<{ text: string; start: number; end: number }> {
   // Use NLP to find potential address patterns
-  // This is a simplified version - real address detection would need more sophisticated patterns
   const addressPatterns = [
     // US style addresses
     /\d+\s+[A-Za-z]+(?:\s+[A-Za-z]+)*(?:\s+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Court|Ct|Place|Pl|Circle|Cir))\b\.?(?:\s*,?\s*(?:Suite|Ste|Apt|Apartment|Unit|#)\s*\d+)?/gi,

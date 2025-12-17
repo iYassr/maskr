@@ -1,6 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useDocumentStore } from '../stores/documentStore'
 import type { Detection } from '../types'
+import { Button } from './ui/button'
+import { ScrollArea } from './ui/scroll-area'
+import { ChevronLeft, Download, Copy, CheckCircle } from 'lucide-react'
 
 interface ExportStepProps {
   onBack: () => void
@@ -10,14 +13,11 @@ interface ExportStepProps {
 // Generate masked content by replacing approved detections with placeholders
 function applyMasking(content: string, detections: Detection[]): string {
   try {
-    // Ensure content is a string
     const safeContent = typeof content === 'string' ? content : ''
     if (!safeContent) return ''
 
-    // Ensure detections is an array
     const safeDetections = Array.isArray(detections) ? detections : []
 
-    // Filter valid approved detections with strict validation
     const validDetections = safeDetections.filter(d => {
       if (!d || !d.approved || !d.position) return false
       const start = Number(d.position.start)
@@ -37,7 +37,6 @@ function applyMasking(content: string, detections: Detection[]): string {
 
     if (validDetections.length === 0) return safeContent
 
-    // Sort by position descending to replace from end to start (preserves positions)
     const sorted = [...validDetections].sort((a, b) =>
       Number(b.position.start) - Number(a.position.start)
     )
@@ -58,6 +57,15 @@ function applyMasking(content: string, detections: Detection[]): string {
   }
 }
 
+// Category colors
+const categoryColors: Record<string, string> = {
+  pii: 'bg-red-500',
+  company: 'bg-blue-500',
+  financial: 'bg-green-500',
+  technical: 'bg-purple-500',
+  custom: 'bg-yellow-500'
+}
+
 export function ExportStep({ onBack, onReset }: ExportStepProps) {
   const { file, content, detections, maskedContent, setMaskedContent, setMappings } = useDocumentStore()
 
@@ -66,8 +74,8 @@ export function ExportStep({ onBack, onReset }: ExportStepProps) {
   const [exportSuccess, setExportSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'sanitized' | 'comparison'>('sanitized')
+  const [copied, setCopied] = useState(false)
 
-  // Stats
   const approvedDetections = useMemo(() =>
     detections.filter(d => d.approved),
     [detections]
@@ -81,20 +89,16 @@ export function ExportStep({ onBack, onReset }: ExportStepProps) {
     return stats
   }, [approvedDetections])
 
-  // Generate masked content on mount
   useEffect(() => {
     async function generateMasked() {
       try {
-        // Ensure we have valid data
         const safeContent = typeof content === 'string' ? content : ''
         const safeDetections = Array.isArray(detections) ? detections : []
         const safeApproved = Array.isArray(approvedDetections) ? approvedDetections : []
 
-        // Apply masking locally
         const masked = applyMasking(safeContent, safeDetections)
         setMaskedContent(masked)
 
-        // Build mapping table safely
         const mappingMap = new Map<string, { placeholder: string; values: Set<string>; category: string }>()
         safeApproved.forEach(d => {
           if (!d || typeof d.suggestedPlaceholder !== 'string') return
@@ -140,20 +144,16 @@ export function ExportStep({ onBack, onReset }: ExportStepProps) {
     setError(null)
 
     try {
-      // Get original file extension (remove leading dot if present)
       const ext = (file?.extension || '.txt').replace(/^\./, '')
       const baseName = file?.fileName?.replace(/\.[^/.]+$/, '') || 'document'
       const defaultName = `${baseName}_sanitized.${ext}`
 
-      // Convert content to base64 for the API
       const contentBase64 = btoa(unescape(encodeURIComponent(maskedContent)))
 
       const result = await window.api?.saveFile(contentBase64, defaultName, ext)
 
       if (result) {
         setExportSuccess(true)
-      } else {
-        // User cancelled - not an error
       }
     } catch (err) {
       setError('Failed to export document')
@@ -165,7 +165,8 @@ export function ExportStep({ onBack, onReset }: ExportStepProps) {
   const handleCopyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(maskedContent)
-      // Could show a toast here
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     } catch {
       setError('Failed to copy to clipboard')
     }
@@ -173,54 +174,48 @@ export function ExportStep({ onBack, onReset }: ExportStepProps) {
 
   if (exportSuccess) {
     return (
-      <div className="flex flex-col items-center justify-center h-full animate-in">
+      <div className="flex flex-col items-center justify-center h-full">
         <div className="text-center max-w-md">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center"
-            style={{ background: 'var(--cat-financial-bg)' }}>
-            <CheckCircleIcon className="w-10 h-10 text-[var(--cat-financial)]" />
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center bg-green-500/20">
+            <CheckCircle className="w-10 h-10 text-green-400" />
           </div>
-          <h2 className="font-display text-2xl font-medium text-[var(--text-primary)] mb-2">
+          <h2 className="text-2xl font-semibold text-foreground mb-2">
             Document Exported
           </h2>
-          <p className="text-[var(--text-secondary)] mb-8">
+          <p className="text-muted-foreground mb-8">
             Your sanitized document has been saved successfully.
           </p>
 
-          <div className="flex items-center justify-center gap-3">
-            <button
-              onClick={onReset}
-              className="btn-primary px-6 py-2.5 rounded-lg"
-            >
-              Sanitize Another Document
-            </button>
-          </div>
+          <Button onClick={onReset}>
+            Sanitize Another Document
+          </Button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-full animate-in">
+    <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex-shrink-0 px-6 py-4 border-b" style={{ borderColor: 'var(--border)' }}>
+      <div className="flex-shrink-0 px-6 py-4 border-b border-border">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-display text-xl font-medium text-[var(--text-primary)]">
+            <h2 className="text-xl font-semibold text-foreground">
               Export Sanitized Document
             </h2>
-            <p className="text-sm text-[var(--text-muted)] mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {approvedDetections.length} items will be masked
             </p>
           </div>
 
           {/* View toggle */}
-          <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: 'var(--bg-tertiary)' }}>
+          <div className="flex items-center gap-1 p-1 rounded-lg bg-muted">
             <button
               onClick={() => setViewMode('sanitized')}
               className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                 viewMode === 'sanitized'
-                  ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)]'
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Sanitized
@@ -229,8 +224,8 @@ export function ExportStep({ onBack, onReset }: ExportStepProps) {
               onClick={() => setViewMode('comparison')}
               className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                 viewMode === 'comparison'
-                  ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)]'
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Compare
@@ -243,62 +238,62 @@ export function ExportStep({ onBack, onReset }: ExportStepProps) {
       <div className="flex-1 flex overflow-hidden">
         {isGenerating ? (
           <div className="flex-1 flex flex-col items-center justify-center">
-            <div className="w-10 h-10 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin mb-4" />
-            <p className="text-[var(--text-secondary)]">Generating sanitized document...</p>
+            <div className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin mb-4" />
+            <p className="text-muted-foreground">Generating sanitized document...</p>
           </div>
         ) : viewMode === 'comparison' ? (
-          // Side by side comparison
           <div className="flex-1 flex gap-0">
-            <div className="flex-1 flex flex-col border-r" style={{ borderColor: 'var(--border)' }}>
-              <div className="px-4 py-2 border-b flex items-center gap-2" style={{ borderColor: 'var(--border)' }}>
-                <span className="w-2 h-2 rounded-full bg-[var(--cat-pii)]"></span>
-                <span className="text-xs font-medium text-[var(--text-muted)]">Original</span>
+            <div className="flex-1 flex flex-col border-r border-border">
+              <div className="px-4 py-2 border-b border-border flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                <span className="text-xs font-medium text-muted-foreground">Original</span>
               </div>
-              <div className="flex-1 overflow-auto p-4">
-                <pre className="document-preview p-4 text-sm whitespace-pre-wrap">{content}</pre>
-              </div>
+              <ScrollArea className="flex-1">
+                <pre className="p-4 text-sm whitespace-pre-wrap text-foreground font-mono">{content}</pre>
+              </ScrollArea>
             </div>
             <div className="flex-1 flex flex-col">
-              <div className="px-4 py-2 border-b flex items-center gap-2" style={{ borderColor: 'var(--border)' }}>
-                <span className="w-2 h-2 rounded-full bg-[var(--cat-financial)]"></span>
-                <span className="text-xs font-medium text-[var(--text-muted)]">Sanitized</span>
+              <div className="px-4 py-2 border-b border-border flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                <span className="text-xs font-medium text-muted-foreground">Sanitized</span>
               </div>
-              <div className="flex-1 overflow-auto p-4">
-                <pre className="document-preview p-4 text-sm whitespace-pre-wrap">{maskedContent}</pre>
-              </div>
+              <ScrollArea className="flex-1">
+                <pre className="p-4 text-sm whitespace-pre-wrap text-foreground font-mono">{maskedContent}</pre>
+              </ScrollArea>
             </div>
           </div>
         ) : (
-          // Sanitized view only
           <div className="flex-1 flex">
-            <div className="flex-1 overflow-auto p-4">
-              <pre className="document-preview p-4 text-sm whitespace-pre-wrap h-full">{maskedContent}</pre>
-            </div>
+            <ScrollArea className="flex-1">
+              <div className="p-4">
+                <pre className="p-4 text-sm whitespace-pre-wrap text-foreground font-mono rounded-lg bg-muted/50 border border-border">{maskedContent}</pre>
+              </div>
+            </ScrollArea>
 
             {/* Stats sidebar */}
-            <div className="w-64 flex-shrink-0 border-l p-4" style={{ borderColor: 'var(--border)' }}>
-              <h3 className="text-sm font-medium text-[var(--text-primary)] mb-4">Summary</h3>
+            <div className="w-64 flex-shrink-0 border-l border-border p-4">
+              <h3 className="text-sm font-medium text-foreground mb-4">Summary</h3>
 
               <div className="space-y-3">
                 <StatItem
                   label="Total Masked"
                   value={approvedDetections.length}
-                  color="var(--accent)"
+                  colorClass="bg-primary"
                 />
                 {statsByCategory.pii && (
-                  <StatItem label="Personal Info" value={statsByCategory.pii} color="var(--cat-pii)" />
+                  <StatItem label="Personal Info" value={statsByCategory.pii} colorClass="bg-red-500" />
                 )}
                 {statsByCategory.company && (
-                  <StatItem label="Company" value={statsByCategory.company} color="var(--cat-company)" />
+                  <StatItem label="Company" value={statsByCategory.company} colorClass="bg-blue-500" />
                 )}
                 {statsByCategory.financial && (
-                  <StatItem label="Financial" value={statsByCategory.financial} color="var(--cat-financial)" />
+                  <StatItem label="Financial" value={statsByCategory.financial} colorClass="bg-green-500" />
                 )}
                 {statsByCategory.technical && (
-                  <StatItem label="Technical" value={statsByCategory.technical} color="var(--cat-technical)" />
+                  <StatItem label="Technical" value={statsByCategory.technical} colorClass="bg-purple-500" />
                 )}
                 {statsByCategory.custom && (
-                  <StatItem label="Custom" value={statsByCategory.custom} color="var(--cat-custom)" />
+                  <StatItem label="Custom" value={statsByCategory.custom} colorClass="bg-yellow-500" />
                 )}
               </div>
             </div>
@@ -308,97 +303,62 @@ export function ExportStep({ onBack, onReset }: ExportStepProps) {
 
       {/* Error message */}
       {error && (
-        <div className="mx-6 mb-4 px-4 py-3 rounded-lg bg-[var(--cat-pii-bg)] border border-[var(--cat-pii)] text-[var(--cat-pii)] text-sm">
+        <div className="mx-6 mb-4 px-4 py-3 rounded-lg bg-destructive/10 border border-destructive text-destructive text-sm">
           {error}
         </div>
       )}
 
       {/* Footer */}
-      <div className="flex-shrink-0 px-6 py-4 border-t flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
-        <button
-          onClick={onBack}
-          className="btn-secondary px-4 py-2 rounded-lg flex items-center gap-2"
-        >
-          <ChevronLeftIcon />
+      <div className="flex-shrink-0 px-6 py-4 border-t border-border flex items-center justify-between">
+        <Button variant="ghost" onClick={onBack}>
+          <ChevronLeft className="h-4 w-4 mr-1" />
           Back
-        </button>
+        </Button>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={handleCopyToClipboard}
-            className="btn-secondary px-4 py-2 rounded-lg flex items-center gap-2"
-          >
-            <CopyIcon />
-            Copy
-          </button>
-          <button
+          <Button variant="outline" onClick={handleCopyToClipboard}>
+            {copied ? (
+              <>
+                <CheckCircle className="h-4 w-4 mr-1 text-green-400" />
+                Copied
+              </>
+            ) : (
+              <>
+                <Copy className="h-4 w-4 mr-1" />
+                Copy
+              </>
+            )}
+          </Button>
+          <Button
             onClick={handleExport}
             disabled={isExporting || isGenerating}
-            className="btn-primary px-6 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
           >
             {isExporting ? (
               <>
-                <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin mr-1" />
                 Exporting...
               </>
             ) : (
               <>
-                <DownloadIcon />
+                <Download className="h-4 w-4 mr-1" />
                 Export Document
               </>
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
   )
 }
 
-function StatItem({ label, value, color }: { label: string; value: number; color: string }) {
+function StatItem({ label, value, colorClass }: { label: string; value: number; colorClass: string }) {
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full" style={{ background: color }}></span>
-        <span className="text-sm text-[var(--text-secondary)]">{label}</span>
+        <span className={`w-2 h-2 rounded-full ${colorClass}`}></span>
+        <span className="text-sm text-muted-foreground">{label}</span>
       </div>
-      <span className="text-sm font-medium text-[var(--text-primary)]">{value}</span>
+      <span className="text-sm font-medium text-foreground">{value}</span>
     </div>
-  )
-}
-
-// Icons
-function CheckCircleIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-      <polyline points="22 4 12 14.01 9 11.01" />
-    </svg>
-  )
-}
-
-function ChevronLeftIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="m15 18-6-6 6-6" />
-    </svg>
-  )
-}
-
-function CopyIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-    </svg>
-  )
-}
-
-function DownloadIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="7 10 12 15 17 10" />
-      <line x1="12" x2="12" y1="15" y2="3" />
-    </svg>
   )
 }
