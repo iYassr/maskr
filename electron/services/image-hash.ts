@@ -3,12 +3,15 @@
  * Uses perceptual hashing (Average Hash - aHash) to compare images
  */
 
+import { createRequire } from 'module'
+const require = createRequire(import.meta.url)
+
 // Conditionally import Sharp (optional dependency)
 let sharp: typeof import('sharp') | null = null
 try {
   sharp = require('sharp')
-} catch {
-  console.log('Sharp not available - logo detection disabled')
+} catch (err) {
+  console.log('Sharp not available - logo detection disabled', err)
 }
 
 export interface ImageHashResult {

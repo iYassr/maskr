@@ -1,11 +1,13 @@
 import Tesseract from 'tesseract.js'
+import { createRequire } from 'module'
+const require = createRequire(import.meta.url)
 
 // Sharp is optional - native module may not be available on all platforms
 let sharp: typeof import('sharp') | null = null
 try {
   sharp = require('sharp')
-} catch {
-  console.log('Sharp not available - image preprocessing disabled')
+} catch (err) {
+  console.log('Sharp not available - image preprocessing disabled', err)
 }
 
 export interface OCRResult {
