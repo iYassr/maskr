@@ -66,17 +66,30 @@ export function LogoSettings({ open, onOpenChange }: LogoSettingsProps) {
 
       // Compute hash via IPC
       const result = await window.api?.logoComputeHash(base64)
+      console.log('Logo upload result:', result)
 
       if (!result?.success) {
         throw new Error(result?.error || 'Failed to process image')
       }
 
-      // Update config
+      if (!result.thumbnail) {
+        throw new Error('Failed to create image thumbnail')
+      }
+
+      // Update config with the PNG thumbnail
+      console.log('Saving logo config:', {
+        thumbnailLength: result.thumbnail.length,
+        hash: result.hash,
+        enabled: true
+      })
+
       setLogoConfig({
-        imageData: result.thumbnail || base64,
+        imageData: result.thumbnail,
         imageHash: result.hash,
         enabled: true
       })
+
+      console.log('Logo config saved successfully')
     } catch (err) {
       console.error('Logo upload error:', err)
       setError(err instanceof Error ? err.message : 'Failed to upload logo')
@@ -108,6 +121,15 @@ export function LogoSettings({ open, onOpenChange }: LogoSettingsProps) {
   }, [setLogoConfig])
 
   const logoDetection = config.logoDetection
+
+  // Debug: log current state
+  console.log('LogoSettings state:', {
+    enabled: logoDetection.enabled,
+    hasImageData: !!logoDetection.imageData,
+    hasImageHash: !!logoDetection.imageHash,
+    imageHash: logoDetection.imageHash,
+    threshold: logoDetection.similarityThreshold
+  })
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

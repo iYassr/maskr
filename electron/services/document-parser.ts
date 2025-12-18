@@ -2,6 +2,7 @@ import mammoth from 'mammoth'
 import ExcelJS from 'exceljs'
 import { PDFDocument } from 'pdf-lib'
 import path from 'path'
+import JSZip from 'jszip'
 
 export interface ParsedDocument {
   content: string
@@ -19,7 +20,7 @@ export interface ParsedDocument {
   }[]
 }
 
-export type SupportedFormat = 'txt' | 'md' | 'docx' | 'xlsx' | 'csv' | 'pdf' | 'json' | 'html'
+export type SupportedFormat = 'txt' | 'md' | 'docx' | 'xlsx' | 'csv' | 'pdf' | 'json' | 'html' | 'png' | 'jpg' | 'jpeg' | 'gif' | 'bmp' | 'webp' | 'tiff'
 
 export async function parseDocument(filePath: string, buffer: Buffer): Promise<ParsedDocument> {
   const ext = path.extname(filePath).toLowerCase().slice(1) as SupportedFormat
@@ -40,6 +41,14 @@ export async function parseDocument(filePath: string, buffer: Buffer): Promise<P
       return parseJson(buffer)
     case 'html':
       return parseHtml(buffer)
+    case 'png':
+    case 'jpg':
+    case 'jpeg':
+    case 'gif':
+    case 'bmp':
+    case 'webp':
+    case 'tiff':
+      return parseImage(buffer, ext)
     default:
       throw new Error(`Unsupported file format: ${ext}`)
   }
@@ -50,27 +59,59 @@ async function parseTextFile(buffer: Buffer, format: string): Promise<ParsedDocu
   return { content, format }
 }
 
+async function parseImage(buffer: Buffer, format: string): Promise<ParsedDocument> {
+  // Return the image buffer for OCR processing - content will be filled by OCR
+  const contentType = format === 'jpg' ? 'image/jpeg' : `image/${format}`
+  return {
+    content: '', // Will be populated by OCR
+    format: format,
+    images: [
+      {
+        id: 'img_1',
+        data: buffer,
+        contentType
+      }
+    ]
+  }
+}
+
 async function parseDocx(buffer: Buffer): Promise<ParsedDocument> {
   const result = await mammoth.extractRawText({ buffer })
   const images: ParsedDocument['images'] = []
 
-  // Try to also extract images
+  // Extract images directly from DOCX zip structure (word/media folder)
   try {
-    await mammoth.convertToHtml({
-      buffer,
-      convertImage: mammoth.images.imgElement(async (image) => {
-        const imageBuffer = await image.read()
-        const imageId = `img_${images.length + 1}`
-        images.push({
-          id: imageId,
-          data: imageBuffer as Buffer,
-          contentType: image.contentType
-        })
-        return { src: `[IMAGE:${imageId}]` }
+    const zip = await JSZip.loadAsync(buffer)
+
+    // Find all files in word/media folder
+    const mediaFiles = Object.keys(zip.files).filter(name =>
+      name.startsWith('word/media/') && !zip.files[name].dir
+    )
+
+    for (const filePath of mediaFiles) {
+      const file = zip.files[filePath]
+      const imageBuffer = await file.async('nodebuffer')
+      const fileName = filePath.split('/').pop() || ''
+      const ext = fileName.split('.').pop()?.toLowerCase() || ''
+
+      // Determine content type
+      let contentType = 'image/png'
+      if (ext === 'jpg' || ext === 'jpeg') contentType = 'image/jpeg'
+      else if (ext === 'gif') contentType = 'image/gif'
+      else if (ext === 'webp') contentType = 'image/webp'
+      else if (ext === 'bmp') contentType = 'image/bmp'
+      else if (ext === 'emf' || ext === 'wmf') continue // Skip Windows metafiles
+
+      const imageId = `img_${images.length + 1}`
+
+      images.push({
+        id: imageId,
+        data: imageBuffer,
+        contentType
       })
-    })
+    }
   } catch {
-    // Ignore image extraction errors
+    // Image extraction failed, continue without images
   }
 
   return {

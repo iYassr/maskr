@@ -64,9 +64,13 @@ function createWindow() {
 
   if (VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(VITE_DEV_SERVER_URL)
-    mainWindow.webContents.openDevTools()
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
+  }
+
+  // Open DevTools only in development
+  if (VITE_DEV_SERVER_URL) {
+    mainWindow.webContents.openDevTools()
   }
 
   mainWindow.on('closed', () => {
@@ -382,8 +386,15 @@ ipcMain.handle('logo:computeHash', async (_event, imageBufferBase64: string) => 
       }
     }
 
-    // Create thumbnail for preview
+    // Create thumbnail for preview (always converts to PNG)
     const thumbnail = await createThumbnail(buffer, 128)
+
+    if (!thumbnail) {
+      return {
+        success: false,
+        error: 'Failed to create thumbnail preview'
+      }
+    }
 
     return {
       success: true,
@@ -445,7 +456,7 @@ ipcMain.handle(
             }
           }
         } catch (imgError) {
-          console.warn(`Failed to hash image ${image.id}:`, imgError)
+          // Skip images that fail to hash
         }
       }
 

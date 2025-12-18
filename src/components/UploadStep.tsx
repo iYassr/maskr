@@ -4,9 +4,10 @@ import { useConfigStore } from '../stores/configStore'
 import type { Detection, DetectionCategory } from '../types'
 import { Spinner } from './ui/spinner'
 import { LogoSettings } from './LogoSettings'
-import { Upload, Shield, User, Building2, DollarSign, Cpu, Key, CheckCircle, Settings, Image } from 'lucide-react'
+import { ConfigModal } from './ConfigModal'
+import { Upload, Shield, User, Building2, DollarSign, Cpu, Key, CheckCircle, Settings, Image, Sliders } from 'lucide-react'
 
-const SUPPORTED_EXTENSIONS = ['.pdf', '.docx', '.doc', '.xlsx', '.xls', '.csv', '.txt', '.md']
+const SUPPORTED_EXTENSIONS = ['.pdf', '.docx', '.doc', '.xlsx', '.xls', '.csv', '.txt', '.md', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.tiff']
 
 // Map NER entity types to detection categories
 // Note: Organizations/companies are only detected via user configuration, not NER
@@ -44,6 +45,7 @@ export function UploadStep({ onFileUploaded }: UploadStepProps) {
   const [processingStatus, setProcessingStatus] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [showLogoSettings, setShowLogoSettings] = useState(false)
+  const [showConfigModal, setShowConfigModal] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { setFile, setContent, setDetections, setStats } = useDocumentStore()
@@ -78,19 +80,46 @@ export function UploadStep({ onFileUploaded }: UploadStepProps) {
       setProcessingStatus('Parsing document...')
       const parseResult = await window.api?.parseDocument(file.name, buffer)
 
-      if (!parseResult?.success || !parseResult.content) {
+      if (!parseResult?.success) {
         throw new Error(parseResult?.error || 'Failed to parse document')
+      }
+
+      // Check if this is an image file that needs OCR
+      const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'tiff']
+      const extension = file.name.split('.').pop()?.toLowerCase() || ''
+      const isImageFile = imageExtensions.includes(extension)
+
+      let contentForNER = parseResult.content || ''
+
+      // If image file, run OCR to extract text
+      if (isImageFile && (!contentForNER || contentForNER.trim() === '')) {
+        setProcessingStatus('Running OCR on image...')
+        try {
+          const ocrResult = await window.api?.ocrExtractText(buffer)
+          if (ocrResult?.success && ocrResult.text) {
+            contentForNER = ocrResult.text
+            console.log('OCR extracted text:', contentForNER.substring(0, 200))
+          } else {
+            console.warn('OCR failed or returned no text:', ocrResult?.error)
+          }
+        } catch (ocrErr) {
+          console.warn('OCR error:', ocrErr)
+        }
+      }
+
+      if (!contentForNER || contentForNER.trim() === '') {
+        throw new Error('No text content found in document (OCR may have failed)')
       }
 
       // Extract entities via NER
       setProcessingStatus('Detecting sensitive information...')
-      const nerResult = await window.api?.extractEntities(parseResult.content)
+      const nerResult = await window.api?.extractEntities(contentForNER)
 
       if (!nerResult?.success) {
         throw new Error(nerResult?.error || 'Failed to analyze document')
       }
 
-      const documentContent = parseResult.content || ''
+      const documentContent = contentForNER
 
       // Safely get entities array
       const rawEntities = Array.isArray(nerResult.entities) ? nerResult.entities : []
@@ -139,7 +168,12 @@ export function UploadStep({ onFileUploaded }: UploadStepProps) {
 
       // Logo detection for DOCX files
       const logoDetection = config.logoDetection
-      const extension = file.name.split('.').pop()?.toLowerCase()
+      console.log('Logo detection check:', {
+        enabled: logoDetection.enabled,
+        hasHash: !!logoDetection.imageHash,
+        extension,
+        hasImages: parseResult.hasImages
+      })
 
       if (
         logoDetection.enabled &&
@@ -148,6 +182,7 @@ export function UploadStep({ onFileUploaded }: UploadStepProps) {
         parseResult.hasImages
       ) {
         setProcessingStatus('Scanning for company logos...')
+        console.log('Starting logo scan...')
 
         try {
           const logoResult = await window.api?.logoScanDocument(
@@ -156,6 +191,7 @@ export function UploadStep({ onFileUploaded }: UploadStepProps) {
             logoDetection.imageHash,
             logoDetection.similarityThreshold
           )
+          console.log('Logo scan result:', logoResult)
 
           if (logoResult?.success && logoResult.matchedImageIds && logoResult.matchedImageIds.length > 0) {
             // Add logo detections
@@ -329,6 +365,9 @@ export function UploadStep({ onFileUploaded }: UploadStepProps) {
       {/* Logo Settings Dialog */}
       <LogoSettings open={showLogoSettings} onOpenChange={setShowLogoSettings} />
 
+      {/* Config Modal */}
+      <ConfigModal open={showConfigModal} onOpenChange={setShowConfigModal} />
+
       {/* Right side - Info panel */}
       <div className="w-96 flex flex-col p-8 bg-muted/20">
         <div className="flex items-center justify-between mb-6">
@@ -341,13 +380,22 @@ export function UploadStep({ onFileUploaded }: UploadStepProps) {
               <p className="text-sm text-muted-foreground">Protect your data</p>
             </div>
           </div>
-          <button
-            onClick={() => setShowLogoSettings(true)}
-            className="p-2 rounded-md hover:bg-muted transition-colors"
-            title="Logo Detection Settings"
-          >
-            <Settings className="h-5 w-5 text-muted-foreground" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setShowConfigModal(true)}
+              className="p-2 rounded-md hover:bg-muted transition-colors"
+              title="Detection Settings"
+            >
+              <Sliders className="h-5 w-5 text-muted-foreground" />
+            </button>
+            <button
+              onClick={() => setShowLogoSettings(true)}
+              className="p-2 rounded-md hover:bg-muted transition-colors"
+              title="Logo Detection Settings"
+            >
+              <Settings className="h-5 w-5 text-muted-foreground" />
+            </button>
+          </div>
         </div>
 
         <p className="text-muted-foreground mb-8">

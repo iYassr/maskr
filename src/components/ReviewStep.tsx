@@ -32,7 +32,7 @@ const categoryColors: Record<DetectionCategory, string> = {
   custom: 'bg-yellow-500/20 text-yellow-400'
 }
 
-type SortField = 'text' | 'category' | 'replacement'
+type SortField = 'text' | 'category' | 'confidence' | 'replacement'
 type SortDirection = 'asc' | 'desc'
 
 interface ReviewStepProps {
@@ -91,6 +91,9 @@ export function ReviewStep({ onContinue, onBack }: ReviewStepProps) {
           break
         case 'category':
           comparison = a.category.localeCompare(b.category)
+          break
+        case 'confidence':
+          comparison = (a.confidence || 0) - (b.confidence || 0)
           break
         case 'replacement':
           comparison = a.suggestedPlaceholder.localeCompare(b.suggestedPlaceholder)
@@ -233,6 +236,9 @@ export function ReviewStep({ onContinue, onBack }: ReviewStepProps) {
                 <TableHead className="w-32">
                   <SortableHeader field="category">Category</SortableHeader>
                 </TableHead>
+                <TableHead className="w-24">
+                  <SortableHeader field="confidence">Confidence</SortableHeader>
+                </TableHead>
                 <TableHead className="w-40">
                   <SortableHeader field="replacement">Replacement</SortableHeader>
                 </TableHead>
@@ -242,7 +248,7 @@ export function ReviewStep({ onContinue, onBack }: ReviewStepProps) {
             <TableBody>
               {filteredDetections.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                     No detections found
                   </TableCell>
                 </TableRow>
@@ -267,6 +273,14 @@ export function ReviewStep({ onContinue, onBack }: ReviewStepProps) {
                     <TableCell>
                       <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${categoryColors[detection.category]}`}>
                         {detection.subcategory}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`text-xs font-medium ${
+                        detection.confidence >= 0.8 ? 'text-green-400' :
+                        detection.confidence >= 0.5 ? 'text-yellow-400' : 'text-red-400'
+                      }`}>
+                        {Math.round(detection.confidence * 100)}%
                       </span>
                     </TableCell>
                     <TableCell>

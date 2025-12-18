@@ -61,6 +61,9 @@ export function extractEntities(text: string, userCustomNames?: string[]): NEREn
   // 6. Extract phone numbers (all formats)
   detectPhoneNumbers(text, addEntity)
 
+  // 7. Extract email addresses
+  detectEmails(text, addEntity)
+
   // Deduplicate entities (same position)
   const seen = new Set<string>()
   const uniqueEntities = entities.filter((e) => {
@@ -335,6 +338,50 @@ function detectPhoneNumbers(
         confidence: 85
       })
     }
+  }
+}
+
+// Detect email addresses
+function detectEmails(
+  text: string,
+  addEntity: (entity: NEREntity) => void
+): void {
+  // Comprehensive email pattern
+  // Matches: user@domain.com, user.name@domain.co.uk, user+tag@domain.org, etc.
+  const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g
+
+  const seen = new Set<string>()
+
+  let match: RegExpExecArray | null
+  while ((match = emailPattern.exec(text)) !== null) {
+    const email = match[0].toLowerCase()
+
+    // Skip if already seen
+    if (seen.has(email)) continue
+    seen.add(email)
+
+    // Validate basic structure
+    const parts = email.split('@')
+    if (parts.length !== 2) continue
+
+    const [local, domain] = parts
+
+    // Local part validations
+    if (local.length === 0 || local.length > 64) continue
+    if (local.startsWith('.') || local.endsWith('.')) continue
+
+    // Domain validations
+    if (domain.length === 0 || domain.length > 253) continue
+    if (domain.startsWith('.') || domain.startsWith('-')) continue
+    if (!domain.includes('.')) continue
+
+    addEntity({
+      text: match[0],
+      type: 'email',
+      start: match.index,
+      end: match.index + match[0].length,
+      confidence: 95
+    })
   }
 }
 

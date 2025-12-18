@@ -313,7 +313,27 @@ export const useConfigStore = create<ConfigState>()(
       resetConfig: () => set({ config: defaultConfig })
     }),
     {
-      name: 'docsanitizer-config'
+      name: 'docsanitizer-config',
+      // Merge persisted state with defaults to handle new properties
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as { config?: Partial<Config> } | undefined
+        return {
+          ...currentState,
+          config: {
+            ...defaultConfig,
+            ...persisted?.config,
+            // Ensure nested objects exist with defaults
+            customEntities: {
+              ...defaultConfig.customEntities,
+              ...persisted?.config?.customEntities
+            },
+            logoDetection: {
+              ...defaultConfig.logoDetection,
+              ...persisted?.config?.logoDetection
+            }
+          }
+        }
+      }
     }
   )
 )
