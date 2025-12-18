@@ -497,14 +497,117 @@ The NER engine detects money **only** with explicit currency indicators:
 │                      SUPPORTED FILE FORMATS                                  │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│  FORMAT          EXTENSION       PARSER                                     │
-│  ──────          ─────────       ──────                                     │
-│  PDF             .pdf            pdf-parse                                  │
-│  Word            .docx, .doc     mammoth                                    │
-│  Excel           .xlsx, .xls     xlsx                                       │
-│  CSV             .csv            raw text                                   │
-│  Plain Text      .txt            raw text                                   │
-│  Markdown        .md             raw text                                   │
+│  FORMAT          EXTENSION       PARSER           SPECIAL FEATURES          │
+│  ──────          ─────────       ──────           ────────────────          │
+│  PDF             .pdf            pdf-parse        -                         │
+│  Word            .docx           mammoth+JSZip    Logo detection            │
+│  Excel           .xlsx, .xls     ExcelJS          -                         │
+│  CSV             .csv            raw text         -                         │
+│  Plain Text      .txt            raw text         -                         │
+│  Markdown        .md             raw text         -                         │
+│  JSON            .json           JSON.parse       -                         │
+│  HTML            .html           text extraction  -                         │
+│  Images          .png,.jpg,etc   Tesseract.js     OCR text extraction       │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Image & OCR Processing
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      IMAGE & OCR PROCESSING FLOW                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   IMAGE FILE (PNG, JPG, etc.)                                               │
+│   ─────────────────────────────                                             │
+│                     │                                                       │
+│                     ▼                                                       │
+│            ┌────────────────┐                                               │
+│            │  Tesseract.js  │                                               │
+│            │  OCR Engine    │                                               │
+│            └────────────────┘                                               │
+│                     │                                                       │
+│                     ▼                                                       │
+│            ┌────────────────┐                                               │
+│            │  Extracted     │                                               │
+│            │  Text Content  │                                               │
+│            └────────────────┘                                               │
+│                     │                                                       │
+│                     ▼                                                       │
+│         ┌──────────────────────┐                                            │
+│         │  Standard Detection  │                                            │
+│         │  (Regex + NER)       │                                            │
+│         └──────────────────────┘                                            │
+│                                                                             │
+│   Supported Image Formats:                                                  │
+│   • PNG, JPG, JPEG, GIF, BMP, WebP, TIFF                                   │
+│                                                                             │
+│   OCR Confidence: Typically 90-95% for clear images                        │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Company Logo Detection
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      LOGO DETECTION FLOW                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   SETUP PHASE (Logo Settings):                                              │
+│   ─────────────────────────────                                             │
+│                                                                             │
+│   User uploads logo ──▶ Sharp (resize 8x8) ──▶ Perceptual Hash (aHash)     │
+│                                     │                                       │
+│                                     ▼                                       │
+│                            ┌────────────────┐                               │
+│                            │  64-bit hash   │                               │
+│                            │  stored in     │                               │
+│                            │  config store  │                               │
+│                            └────────────────┘                               │
+│                                                                             │
+│   DETECTION PHASE (Document Processing):                                    │
+│   ──────────────────────────────────────                                    │
+│                                                                             │
+│   DOCX file ──▶ JSZip ──▶ Extract word/media/* images                      │
+│                                     │                                       │
+│                                     ▼                                       │
+│                      ┌─────────────────────────┐                            │
+│                      │  For each image:        │                            │
+│                      │  1. Compute hash        │                            │
+│                      │  2. Calculate Hamming   │                            │
+│                      │     distance to logo    │                            │
+│                      │  3. Convert to %        │                            │
+│                      └─────────────────────────┘                            │
+│                                     │                                       │
+│                                     ▼                                       │
+│                      ┌─────────────────────────┐                            │
+│                      │  similarity >= 85%?     │                            │
+│                      │  (threshold adjustable) │                            │
+│                      └─────────────────────────┘                            │
+│                            │              │                                 │
+│                           YES            NO                                 │
+│                            │              │                                 │
+│                            ▼              ▼                                 │
+│                    ┌──────────────┐  ┌──────────────┐                       │
+│                    │ Add to       │  │ Skip image   │                       │
+│                    │ detections   │  │              │                       │
+│                    │ (company     │  │              │                       │
+│                    │ category)    │  │              │                       │
+│                    └──────────────┘  └──────────────┘                       │
+│                                                                             │
+│   Hash Algorithm: Average Hash (aHash)                                      │
+│   • Resize image to 8x8 grayscale                                          │
+│   • Calculate average pixel value                                          │
+│   • Each pixel: 1 if > average, 0 otherwise                                │
+│   • Result: 64-bit hash (16 hex characters)                                │
+│                                                                             │
+│   Similarity = 100 - (hammingDistance / 64 * 100)                          │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -548,6 +651,7 @@ interface Config {
 |---------|------|---------|
 | 1.0 | 2024 | Initial release with regex + NER detection, pure shadcn UI |
 | 1.1 | 2024 | Removed location/place detection, removed date detection, added IP address detection to NER, clarified detection engine precedence |
+| 1.2 | 2024 | Added company logo detection using perceptual hashing (aHash), OCR support for image files using Tesseract.js, custom names/keywords configuration UI, confidence column in review table, DOCX image extraction using JSZip |
 
 ---
 
