@@ -5,6 +5,30 @@ All notable changes to DocSanitizer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2024-12-19
+
+### Added
+- Comprehensive README with badges and feature documentation
+- MIT LICENSE file
+- CONTRIBUTING.md with contribution guidelines
+- GitHub issue and PR templates
+- CHANGELOG.md for version tracking
+- ESLint configuration for code quality
+
+### Changed
+- Optimized bundle size (16% reduction)
+  - Replaced lucide-react (44MB) with custom SVG icons (~5KB)
+  - Replaced pdf-parse with unpdf for lighter PDF processing
+  - Removed unused dependencies (CodeMirror, daisyui, sonner, next-themes)
+- Updated screenshots with localized Saudi Arabian data
+- Moved documentation to `docs/` folder
+- Cleaned up debug console.log statements
+
+### Fixed
+- DOCX export now creates proper binary documents
+- SortableHeader component moved outside render to fix React warnings
+- Removed unused variables causing lint warnings
+
 ## [1.0.0] - 2024-12-19
 
 ### Added
