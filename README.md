@@ -9,6 +9,7 @@
 </p>
 
 <p align="center">
+  <a href="#screenshots">Screenshots</a> •
   <a href="#features">Features</a> •
   <a href="#installation">Installation</a> •
   <a href="#usage">Usage</a> •
@@ -30,8 +31,27 @@
 
 Before sharing documents with AI assistants, cloud services, or external parties, you need to ensure sensitive information is properly masked. DocSanitizer runs **100% locally** on your machine - no data ever leaves your device.
 
+## Screenshots
+
+### Upload Your Document
+Drag and drop or browse to select any supported document format.
+
 <p align="center">
-  <img src="screenshots/audit-02-review.png" alt="DocSanitizer Review Interface" width="800">
+  <img src="screenshots/01-initial-load.png" alt="DocSanitizer Upload Screen" width="800">
+</p>
+
+### Review Detections
+See all detected sensitive information with confidence scores, categories, and context. Toggle individual items on/off.
+
+<p align="center">
+  <img src="screenshots/02-after-upload.png" alt="DocSanitizer Review Screen" width="800">
+</p>
+
+### Detailed Detection View
+Filter by category, search detections, and see the document preview with highlighted sensitive data.
+
+<p align="center">
+  <img src="screenshots/audit-02-review.png" alt="DocSanitizer Detection Details" width="800">
 </p>
 
 ## Features
