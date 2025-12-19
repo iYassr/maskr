@@ -33,25 +33,25 @@ Before sharing documents with AI assistants, cloud services, or external parties
 
 ## Screenshots
 
-### Upload Your Document
-Drag and drop or browse to select any supported document format.
+### 1. Upload Your Document
+Drag and drop or browse to select any supported document format. The sidebar shows what types of sensitive information will be detected.
 
 <p align="center">
-  <img src="screenshots/01-initial-load.png" alt="DocSanitizer Upload Screen" width="800">
+  <img src="screenshots/upload.png" alt="DocSanitizer Upload Screen" width="800">
 </p>
 
-### Review Detections
-See all detected sensitive information with confidence scores, categories, and context. Toggle individual items on/off.
+### 2. Review Detections
+See all detected sensitive information organized in a table with categories, confidence scores, replacements, and context. Filter by type and toggle items on/off.
 
 <p align="center">
-  <img src="screenshots/02-after-upload.png" alt="DocSanitizer Review Screen" width="800">
+  <img src="screenshots/review.png" alt="DocSanitizer Review Screen" width="800">
 </p>
 
-### Detailed Detection View
-Filter by category, search detections, and see the document preview with highlighted sensitive data.
+### 3. Export Sanitized Document
+Preview the sanitized document with all sensitive data replaced by placeholders. View a summary of masked items by category, then export.
 
 <p align="center">
-  <img src="screenshots/audit-02-review.png" alt="DocSanitizer Detection Details" width="800">
+  <img src="screenshots/export.png" alt="DocSanitizer Export Screen" width="800">
 </p>
 
 ## Features
