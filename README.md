@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logos/maskr-icon.svg" alt="Maskr Logo" width="120" height="120">
+  <img src="logos/final/maskr-logo-icon-square.svg" alt="Maskr Logo" width="120" height="120">
 </p>
 
 <h1 align="center">Maskr</h1>

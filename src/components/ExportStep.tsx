@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, ReactNode } from 'react'
+import { useState, useEffect, useMemo, type ReactNode } from 'react'
 import { useDocumentStore } from '../stores/documentStore'
 import type { Detection } from '../types'
 import { Button } from './ui/button'
@@ -352,11 +352,11 @@ export function ExportStep({ onBack, onReset }: ExportStepProps) {
           </div>
         ) : (
           <div className="flex-1 flex">
-            <ScrollArea className="flex-1">
+            <div className="flex-1 overflow-auto">
               <div className="p-4">
                 <pre className="p-4 text-sm whitespace-pre-wrap text-foreground font-mono rounded-lg bg-muted/50 border border-border">{maskedContent}</pre>
               </div>
-            </ScrollArea>
+            </div>
 
             {/* Stats sidebar */}
             <div className="w-64 flex-shrink-0 border-l border-border p-4">
