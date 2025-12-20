@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 175 90" width="175" height="90">
+  <rect x="0" y="0" width="175" height="90" fill="#282828"/>
+  <text x="10" y="45" font-family="Hack, monospace" font-size="28" fill="#ebdbb2">maskr</text>
+  <rect x="150" y="25" width="14" height="28" fill="#fe8019"/>
+  <text x="10" y="75" font-family="Hack, monospace" font-size="13" fill="#928374"># document sanitizer</text>
+</svg>

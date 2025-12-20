@@ -5,7 +5,7 @@ import type { Detection, DetectionCategory } from '../types'
 import { Spinner } from './ui/spinner'
 import { LogoSettings } from './LogoSettings'
 import { ConfigModal } from './ConfigModal'
-import { Upload, Shield, User, Building2, DollarSign, Cpu, Key, CheckCircle, Settings, Image, Sliders } from './ui/icons'
+import { Upload, User, Building2, DollarSign, Cpu, Key, CheckCircle, Settings, Image, Sliders } from './ui/icons'
 
 const SUPPORTED_EXTENSIONS = ['.pdf', '.docx', '.doc', '.xlsx', '.xls', '.csv', '.txt', '.md', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.tiff']
 
@@ -360,13 +360,7 @@ export function UploadStep({ onFileUploaded }: UploadStepProps) {
       <div className="w-96 flex flex-col p-8 bg-muted/20">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Shield className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold text-foreground">Maskr</h1>
-              <p className="text-sm text-muted-foreground">Protect your data</p>
-            </div>
+            <img src="/logo-full.svg" alt="Maskr" className="h-14" />
           </div>
           <div className="flex items-center gap-1">
             <button

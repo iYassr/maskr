@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 175 55" width="175" height="55">
+  <rect x="0" y="0" width="175" height="55" fill="#282828"/>
+  <text x="10" y="38" font-family="Hack, monospace" font-size="28" fill="#ebdbb2">maskr</text>
+  <rect x="150" y="18" width="14" height="28" fill="#fe8019"/>
+</svg>
