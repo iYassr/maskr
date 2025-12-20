@@ -1,3 +1,5 @@
+import nlp from 'compromise'
+
 export interface NEREntity {
   text: string
   type: 'person' | 'financial' | 'credit_card' | 'iban' | 'phone' | 'email' | 'ip' | 'url' | 'domain'
@@ -6,7 +8,7 @@ export interface NEREntity {
   confidence?: number
 }
 
-// Custom names that users can add - ONLY these names will be detected as persons
+// Custom names that users can add - these are always detected
 let customNames: Set<string> = new Set()
 
 export function setCustomNames(names: string[]): void {
@@ -43,31 +45,34 @@ export function extractEntities(text: string, userCustomNames?: string[]): NEREn
     }
   }
 
-  // 1. ONLY detect custom user-defined names (no automatic name detection)
+  // 1. Detect custom user-defined names
   detectCustomNames(text, addEntity)
 
-  // 2. Extract financial amounts - ONLY with explicit currency symbols
+  // 2. Detect full names using NLP (first + last name, at least 2 parts)
+  detectFullNames(text, addEntity)
+
+  // 3. Extract financial amounts - ONLY with explicit currency symbols
   detectFinancialAmounts(text, addEntity)
 
-  // 3. Extract credit card numbers (with Luhn validation)
+  // 4. Extract credit card numbers (with Luhn validation)
   detectCreditCards(text, addEntity)
 
-  // 4. Extract IBAN numbers (with structure validation)
+  // 5. Extract IBAN numbers (with structure validation)
   detectIBANs(text, addEntity)
 
-  // 5. Extract IP addresses (before phone to avoid false matches)
+  // 6. Extract IP addresses (before phone to avoid false matches)
   detectIPAddresses(text, addEntity)
 
-  // 6. Extract phone numbers (all formats)
+  // 7. Extract phone numbers (all formats)
   detectPhoneNumbers(text, addEntity)
 
-  // 7. Extract email addresses
+  // 8. Extract email addresses
   detectEmails(text, addEntity)
 
-  // 8. Extract URLs
+  // 9. Extract URLs
   detectURLs(text, addEntity)
 
-  // 9. Extract domain names (after URLs and emails to avoid duplicates)
+  // 10. Extract domain names (after URLs and emails to avoid duplicates)
   detectDomains(text, addEntity)
 
   // Deduplicate entities (same position)
@@ -390,6 +395,39 @@ function detectCustomNames(
       })
     }
   }
+}
+
+// Detect full names using NLP (compromise library)
+// Only detects names with at least 2 parts (first + last name)
+function detectFullNames(
+  text: string,
+  addEntity: (entity: NEREntity) => void
+): void {
+  const doc = nlp(text)
+  const people = doc.people()
+
+  people.forEach((person: ReturnType<typeof nlp>) => {
+    const name = person.text()
+
+    // Only detect if name has at least 2 parts (first + last)
+    const parts = name.trim().split(/\s+/)
+    if (parts.length < 2) return
+
+    // Skip if name is too short (likely false positive)
+    if (name.length < 4) return
+
+    // Find position in original text
+    const start = text.indexOf(name)
+    if (start === -1) return
+
+    addEntity({
+      text: name,
+      type: 'person',
+      start: start,
+      end: start + name.length,
+      confidence: 85
+    })
+  })
 }
 
 // Detect IP addresses (IPv4 and IPv6)
