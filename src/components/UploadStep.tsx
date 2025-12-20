@@ -428,7 +428,7 @@ export function UploadStep({ onFileUploaded }: UploadStepProps) {
 
         <div className="pt-6 border-t border-border mt-auto">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <CheckCircle className="h-4 w-4 text-green-500" />
+            <CheckCircle className="h-4 w-4 text-primary" />
             <span>100% local processing - your data never leaves your device</span>
           </div>
         </div>
@@ -440,7 +440,7 @@ export function UploadStep({ onFileUploaded }: UploadStepProps) {
 function FeatureItem({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center text-muted-foreground flex-shrink-0">
+      <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
         {icon}
       </div>
       <div>

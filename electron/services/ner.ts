@@ -165,18 +165,12 @@ function detectCreditCards(
     /\b\d{13}\b/g
   ]
 
-  const seen = new Set<string>()
-
   for (const pattern of cardPatterns) {
     pattern.lastIndex = 0
     let match: RegExpExecArray | null
     while ((match = pattern.exec(text)) !== null) {
       const cardText = match[0]
       const digitsOnly = cardText.replace(/\D/g, '')
-
-      // Skip if we've already processed this card number
-      if (seen.has(digitsOnly)) continue
-      seen.add(digitsOnly)
 
       // Validate with Luhn algorithm
       if (isValidLuhn(digitsOnly)) {
@@ -242,18 +236,12 @@ function detectIBANs(
     /\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/gi
   ]
 
-  const seen = new Set<string>()
-
   for (const pattern of ibanPatterns) {
     pattern.lastIndex = 0
     let match: RegExpExecArray | null
     while ((match = pattern.exec(text)) !== null) {
       const ibanText = match[0]
       const cleanIBAN = ibanText.replace(/\s/g, '').toUpperCase()
-
-      // Skip if we've already processed this IBAN
-      if (seen.has(cleanIBAN)) continue
-      seen.add(cleanIBAN)
 
       // Validate IBAN structure
       if (isValidIBAN(cleanIBAN)) {
@@ -310,14 +298,12 @@ function detectPhoneNumbers(
     /\b\d{3}[\s.-]\d{3}[\s.-]\d{4}[\s.-]?(?:ext|x|extension)[\s.]?\d{1,5}\b/gi
   ]
 
-  const seen = new Set<string>()
-
   for (const pattern of phonePatterns) {
     pattern.lastIndex = 0
     let match: RegExpExecArray | null
     while ((match = pattern.exec(text)) !== null) {
       const phoneText = match[0]
-      // Normalize for deduplication (remove all non-digits)
+      // Normalize for validation (remove all non-digits)
       const digitsOnly = phoneText.replace(/\D/g, '')
 
       // Must have at least 7 digits (minimum for a local number)
@@ -325,10 +311,6 @@ function detectPhoneNumbers(
 
       // Must not be more than 15 digits (max international standard)
       if (digitsOnly.length > 15) continue
-
-      // Skip if we've already processed this number
-      if (seen.has(digitsOnly)) continue
-      seen.add(digitsOnly)
 
       addEntity({
         text: phoneText,
@@ -350,15 +332,9 @@ function detectEmails(
   // Matches: user@domain.com, user.name@domain.co.uk, user+tag@domain.org, etc.
   const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g
 
-  const seen = new Set<string>()
-
   let match: RegExpExecArray | null
   while ((match = emailPattern.exec(text)) !== null) {
     const email = match[0].toLowerCase()
-
-    // Skip if already seen
-    if (seen.has(email)) continue
-    seen.add(email)
 
     // Validate basic structure
     const parts = email.split('@')

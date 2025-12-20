@@ -49,11 +49,15 @@ let mainWindow: BrowserWindow | null = null
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
 function createWindow() {
+  // Icon path for development mode (in production, electron-builder handles this)
+  const iconPath = path.join(__dirname, '..', 'resources', 'icon.png')
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     minWidth: 900,
     minHeight: 600,
+    icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -87,7 +91,14 @@ function createWindow() {
   })
 }
 
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+  // Set dock icon on macOS
+  if (process.platform === 'darwin' && app.dock) {
+    const iconPath = path.join(__dirname, '..', 'resources', 'icon.png')
+    app.dock.setIcon(iconPath)
+  }
+  createWindow()
+})
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

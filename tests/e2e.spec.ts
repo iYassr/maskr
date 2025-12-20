@@ -91,9 +91,9 @@ test.describe('Maskr E2E Tests', () => {
     const txtFormat = page.locator('text=.txt')
     await expect(txtFormat).toBeVisible()
 
-    // Check Maskr title
-    const title = page.locator('h1:has-text("Maskr")')
-    await expect(title).toBeVisible()
+    // Check Maskr logo (SVG with maskr text)
+    const logo = page.locator('svg:has(text:has-text("maskr"))')
+    await expect(logo).toBeVisible()
   })
 
   test('Full workflow: upload, review, export TXT', async () => {
