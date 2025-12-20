@@ -8,7 +8,7 @@ import {
   createMaskedXlsx,
   createMaskedPdf
 } from './services/document-parser.js'
-import { extractEntities, detectPersonNames } from './services/ner.js'
+import { extractEntities, detectPersonNames } from './services/detector.js'
 import {
   extractTextFromImage,
   extractTextFromImages,
