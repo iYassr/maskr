@@ -18,7 +18,9 @@ const typeToCategory: Record<string, DetectionCategory> = {
   financial: 'financial',
   credit_card: 'financial',
   iban: 'financial',
-  ip: 'technical'
+  ip: 'technical',
+  url: 'technical',
+  domain: 'technical'
 }
 
 // Generate placeholder based on type
@@ -30,7 +32,9 @@ function generatePlaceholder(type: string, index: number): string {
     financial: 'AMOUNT',
     credit_card: 'CARD',
     iban: 'IBAN',
-    ip: 'IP_ADDRESS'
+    ip: 'IP_ADDRESS',
+    url: 'URL',
+    domain: 'DOMAIN'
   }
   return `[${prefixes[type] || 'REDACTED'}_${index + 1}]`
 }

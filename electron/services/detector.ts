@@ -1,6 +1,6 @@
 export interface NEREntity {
   text: string
-  type: 'person' | 'financial' | 'credit_card' | 'iban' | 'phone' | 'email' | 'ip'
+  type: 'person' | 'financial' | 'credit_card' | 'iban' | 'phone' | 'email' | 'ip' | 'url' | 'domain'
   start: number
   end: number
   confidence?: number
@@ -63,6 +63,12 @@ export function extractEntities(text: string, userCustomNames?: string[]): NEREn
 
   // 7. Extract email addresses
   detectEmails(text, addEntity)
+
+  // 8. Extract URLs
+  detectURLs(text, addEntity)
+
+  // 9. Extract domain names (after URLs and emails to avoid duplicates)
+  detectDomains(text, addEntity)
 
   // Deduplicate entities (same position)
   const seen = new Set<string>()
@@ -420,6 +426,66 @@ function detectIPAddresses(
         confidence: 95
       })
     }
+  }
+}
+
+// Detect URLs (http, https, ftp, etc.)
+function detectURLs(
+  text: string,
+  addEntity: (entity: NEREntity) => void
+): void {
+  // URL pattern - matches http://, https://, ftp://, etc.
+  const urlPattern = /\b(?:https?|ftp):\/\/[^\s<>\[\]"'`,;)]+/gi
+
+  let match: RegExpExecArray | null
+  while ((match = urlPattern.exec(text)) !== null) {
+    // Clean up trailing punctuation that might be part of sentence
+    let url = match[0]
+    // Remove trailing punctuation that's likely not part of URL
+    url = url.replace(/[.,;:!?)]+$/, '')
+
+    addEntity({
+      text: url,
+      type: 'url',
+      start: match.index,
+      end: match.index + url.length,
+      confidence: 95
+    })
+  }
+}
+
+// Detect standalone domain names (not part of URLs or emails)
+function detectDomains(
+  text: string,
+  addEntity: (entity: NEREntity) => void
+): void {
+  // Common TLDs to look for
+  const tldPattern = /\b(?!www\.)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.(?:com|org|net|io|co|tech|dev|app|ai|cloud|edu|gov|mil|info|biz|me|tv|cc|xyz|online|site|website|store|shop|blog|email|name|pro|mobi|asia|eu|uk|de|fr|es|it|nl|be|ch|at|au|nz|ca|us|in|jp|cn|kr|ru|br|mx|ar|za|ae|sa|eg|ng|ke|il|tr|pl|cz|se|no|fi|dk|pt|gr|ie|hu|ro|bg|hr|sk|si|lt|lv|ee|ua|by|kz|uz|pk|bd|vn|th|id|my|sg|ph|tw|hk)(?:\.[a-z]{2,3})?\b/gi
+
+  let match: RegExpExecArray | null
+  while ((match = tldPattern.exec(text)) !== null) {
+    const domain = match[0]
+    const start = match.index
+
+    // Skip if this domain is part of an email (check for @ immediately before it)
+    if (start > 0 && text[start - 1] === '@') continue
+    // Also check if there's an @ with no space between
+    const textBefore = text.slice(Math.max(0, start - 65), start)
+    const lastAt = textBefore.lastIndexOf('@')
+    const lastSpace = textBefore.lastIndexOf(' ')
+    if (lastAt > lastSpace) continue
+
+    // Skip if this domain is part of a URL (check for :// before it)
+    const textBeforeShort = text.slice(Math.max(0, start - 10), start)
+    if (textBeforeShort.includes('://')) continue
+
+    addEntity({
+      text: domain,
+      type: 'domain',
+      start: start,
+      end: start + domain.length,
+      confidence: 90
+    })
   }
 }
 
