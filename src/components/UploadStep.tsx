@@ -52,10 +52,9 @@ export function UploadStep({ onFileUploaded }: UploadStepProps) {
   const [error, setError] = useState<string | null>(null)
   const [showLogoSettings, setShowLogoSettings] = useState(false)
   const [showConfigModal, setShowConfigModal] = useState(false)
-  const [pastedText, setPastedText] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const { setFile, setContent, setDetections, setStats } = useDocumentStore()
+  const { setFile, setContent, setDetections, setStats, pastedText, setPastedText } = useDocumentStore()
   const { config } = useConfigStore()
 
   const processFile = useCallback(async (file: File) => {

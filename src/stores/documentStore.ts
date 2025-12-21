@@ -9,6 +9,10 @@ interface DocumentState {
   file: FileData | null
   setFile: (file: FileData | null) => void
 
+  // Pasted text (preserved across navigation)
+  pastedText: string
+  setPastedText: (text: string) => void
+
   // Document content
   content: string
   setContent: (content: string) => void
@@ -53,6 +57,7 @@ interface DocumentState {
 
 const initialState = {
   file: null,
+  pastedText: '',
   content: '',
   detections: [] as Detection[],
   maskedContent: '',
@@ -109,6 +114,8 @@ export const useDocumentStore = create<DocumentState>((set) => ({
   ...initialState,
 
   setFile: (file) => set({ file }),
+
+  setPastedText: (pastedText) => set({ pastedText }),
 
   setContent: (content) => set({ content }),
 
