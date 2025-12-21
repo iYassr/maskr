@@ -1,0 +1,110 @@
+[
+  {
+    "placeholder": "[EMAIL_18]",
+    "originalValues": [
+      "john.smith@acmecorp.com"
+    ]
+  },
+  {
+    "placeholder": "[SSN_17]",
+    "originalValues": [
+      "123-45-6789"
+    ]
+  },
+  {
+    "placeholder": "[PERSON_16]",
+    "originalValues": [
+      "John Smith  Title"
+    ]
+  },
+  {
+    "placeholder": "[URL_15]",
+    "originalValues": [
+      "https://api.acmecorp.com/v2/contract"
+    ]
+  },
+  {
+    "placeholder": "[IP_14]",
+    "originalValues": [
+      "10.0.1.50"
+    ]
+  },
+  {
+    "placeholder": "[PHONE_13]",
+    "originalValues": [
+      "555-333-4444"
+    ]
+  },
+  {
+    "placeholder": "[EMAIL_12]",
+    "originalValues": [
+      "m.chen@acmecorp.com"
+    ]
+  },
+  {
+    "placeholder": "[PERSON_11]",
+    "originalValues": [
+      "Michael Chen  Email"
+    ]
+  },
+  {
+    "placeholder": "[PHONE_10]",
+    "originalValues": [
+      "0532013000"
+    ]
+  },
+  {
+    "placeholder": "[PHONE_9]",
+    "originalValues": [
+      "00440532013000"
+    ]
+  },
+  {
+    "placeholder": "[IBAN_8]",
+    "originalValues": [
+      "DE89370400440532013000"
+    ]
+  },
+  {
+    "placeholder": "[FINANCIAL_7]",
+    "originalValues": [
+      "$500,000.00"
+    ]
+  },
+  {
+    "placeholder": "[PHONE_6]",
+    "originalValues": [
+      "(555) 111-2222"
+    ]
+  },
+  {
+    "placeholder": "[EMAIL_5]",
+    "originalValues": [
+      "jennifer.adams@acmecorp.com"
+    ]
+  },
+  {
+    "placeholder": "[PERSON_4]",
+    "originalValues": [
+      "Jennifer Adams  Email"
+    ]
+  },
+  {
+    "placeholder": "[PHONE_3]",
+    "originalValues": [
+      "(555) 888-9999"
+    ]
+  },
+  {
+    "placeholder": "[EMAIL_2]",
+    "originalValues": [
+      "rthompson@globaltech.io"
+    ]
+  },
+  {
+    "placeholder": "[PERSON_1]",
+    "originalValues": [
+      "Robert Thompson  Email"
+    ]
+  }
+]

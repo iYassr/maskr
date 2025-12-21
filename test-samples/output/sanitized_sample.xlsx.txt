@@ -1,0 +1,24 @@
+--- Sheet: Employees ---
+
+ID	Name	Email	Phone	SSN	Salary	Address
+EMP001	[PERSON_1]	[EMAIL_2]	[PHONE_3]]]	[FINANCIAL_6]	123 Oak Street, San Francisco, CA 94102
+EMP002	[PERSON_7]	[EMAIL_8]	[PHONE_9]INANCIAL_13]	456 Elm Ave, Los Angeles, CA 90001
+EMP003	[PERSON_14]	[EMAIL_15]	[PHONE_17]18]	[FINANCIAL_19]	789 Pine Road, Seattle, WA 98101
+EMP004	[PERSON_20]	[EMAIL_21]	[PHONE_22]3]4]	[FINANCIAL_25]	321 [PERSON_26], Austin, TX 78701
+EMP005	Dr. [PERSON_27]	[EMAIL_28]	[PHONE_30]31]	[FINANCIAL_32]	654 Cedar Lane, Boston, MA 02101
+
+
+--- Sheet: Financial ---
+
+Employee	Bank Account	Routing Number	IBAN	Credit Card
+John Smith	[SAUDI_ID_33]	021000021	[IBAN_34]EDIT_CARD_37]
+Sarah Johnson	[PHONE_38]	021000021	[IBAN_39]	[CREDIT_CARD_40]
+Michael Chen	5678901234	121000358	[IBAN_41]	[CREDIT_CARD_42]
+
+
+--- Sheet: IT Access ---
+
+Employee	Username	IP Address	VPN Access	Portal URL
+John Smith	jsmith	[IP_43]	Yes	[URL_44]Sarah Johnson	sjohnson	[IP_46]	Yes	[URL_47]
+Michael Chen	mchen	[IP_48]	No	[URL_49]
+

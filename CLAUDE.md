@@ -153,6 +153,19 @@ These are marked as external in `vite.config.ts` and must be available at runtim
 - `vite.config.ts` - Build config, lists external dependencies
 - `electron-builder.yml` - Package naming, build targets
 
+## CI/CD (GitHub Actions)
+- `.github/workflows/ci.yml` - Runs tests on Windows, macOS, and Linux on every push/PR
+- `.github/workflows/release.yml` - Builds and publishes releases for all platforms when a tag is pushed
+
+## Windows Testing
+Common Windows-specific issues to watch for:
+- **Path separators**: Use `path.join()` not string concatenation
+- **File permissions**: Windows has different ACL system
+- **Long paths**: Windows has 260 char limit by default
+- **Antivirus**: May flag unsigned exe files
+- **Installer testing**: Test both setup.exe and portable.exe versions
+- **Font rendering**: May look different than macOS
+
 ## Lessons Learned
 1. **Verify before declaring success** - Run tests, don't just start the app
 2. **Rebuild on errors** - Most "failed to analyze/parse" errors are stale build issues

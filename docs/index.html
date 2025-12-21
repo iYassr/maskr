@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>maskr - Document Sanitizer</title>
+  <meta name="description" content="A privacy-focused desktop app for detecting and masking sensitive information in documents. 100% local processing, no data leaves your device.">
+  <meta name="keywords" content="document sanitizer, PII detection, privacy, data masking, sensitive information, GDPR, redaction">
+  <meta property="og:title" content="maskr - Document Sanitizer">
+  <meta property="og:description" content="Detect and mask sensitive information in documents. 100% local, no cloud.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://iyassr.github.io/maskr/">
+  <link rel="icon" type="image/svg+xml" href="assets/maskr-logo-favicon.svg">
+  <style>
+    :root {
+      --bg-dark: #1d2021;
+      --bg-medium: #282828;
+      --bg-light: #3c3836;
+      --text-primary: #ebdbb2;
+      --text-muted: #928374;
+      --accent: #fe8019;
+      --accent-hover: #d65d0e;
+      --green: #b8bb26;
+      --blue: #83a598;
+      --purple: #d3869b;
+      --red: #fb4934;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(29, 32, 33, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--bg-light);
+    }
+
+    nav .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-logo {
+      font-family: 'Courier New', monospace;
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .nav-logo span {
+      color: var(--accent);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--text-primary);
+    }
+
+    .nav-cta {
+      background: var(--accent);
+      color: var(--bg-dark);
+      padding: 8px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    .nav-cta:hover {
+      background: var(--accent-hover);
+      color: var(--bg-dark);
+    }
+
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding-top: 80px;
+    }
+
+    .hero-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .hero-text h1 {
+      font-family: 'Courier New', monospace;
+      font-size: 64px;
+      margin-bottom: 8px;
+    }
+
+    .hero-text h1 span {
+      color: var(--accent);
+    }
+
+    .hero-tagline {
+      font-size: 20px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .hero-description {
+      font-size: 18px;
+      color: var(--text-primary);
+      margin-bottom: 32px;
+      max-width: 500px;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg-dark);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: var(--bg-light);
+      color: var(--text-primary);
+      border: 1px solid var(--text-muted);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-medium);
+      border-color: var(--text-primary);
+    }
+
+    .hero-image {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .hero-image img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Demo Section */
+    .demo {
+      padding: 100px 0;
+      background: var(--bg-medium);
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 40px;
+      margin-bottom: 16px;
+    }
+
+    .section-subtitle {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 18px;
+      margin-bottom: 48px;
+    }
+
+    .demo-video {
+      max-width: 900px;
+      margin: 0 auto;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .demo-video img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Features */
+    .features {
+      padding: 100px 0;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 32px;
+    }
+
+    .feature-card {
+      background: var(--bg-medium);
+      padding: 32px;
+      border-radius: 12px;
+      border: 1px solid var(--bg-light);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent);
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--bg-light);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    .feature-card h3 {
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+
+    .feature-card p {
+      color: var(--text-muted);
+    }
+
+    /* How It Works */
+    .how-it-works {
+      padding: 100px 0;
+      background: var(--bg-medium);
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+    }
+
+    .step {
+      text-align: center;
+    }
+
+    .step-number {
+      width: 48px;
+      height: 48px;
+      background: var(--accent);
+      color: var(--bg-dark);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 20px;
+      margin: 0 auto 20px;
+    }
+
+    .step h3 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    .step p {
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .step-image {
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .step-image img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Formats */
+    .formats {
+      padding: 100px 0;
+    }
+
+    .formats-table {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--bg-medium);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--bg-light);
+    }
+
+    .formats-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .formats-table th,
+    .formats-table td {
+      padding: 16px 24px;
+      text-align: left;
+      border-bottom: 1px solid var(--bg-light);
+    }
+
+    .formats-table th {
+      background: var(--bg-light);
+      font-weight: 600;
+    }
+
+    .formats-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .check {
+      color: var(--green);
+    }
+
+    .dash {
+      color: var(--text-muted);
+    }
+
+    /* Download */
+    .download {
+      padding: 100px 0;
+      background: var(--bg-medium);
+      text-align: center;
+    }
+
+    .download-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 40px;
+    }
+
+    .download-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--bg-light);
+      padding: 24px 40px;
+      border-radius: 12px;
+      text-decoration: none;
+      color: var(--text-primary);
+      border: 1px solid var(--bg-light);
+      transition: all 0.2s;
+      min-width: 180px;
+    }
+
+    .download-btn:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+    }
+
+    .download-btn .platform {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .download-btn .name {
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .download-btn .version {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* Footer */
+    footer {
+      padding: 40px 0;
+      border-top: 1px solid var(--bg-light);
+      text-align: center;
+    }
+
+    footer p {
+      color: var(--text-muted);
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .hero-content {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+
+      .hero-text h1 {
+        font-size: 48px;
+      }
+
+      .hero-description {
+        margin: 0 auto 32px;
+      }
+
+      .hero-buttons {
+        justify-content: center;
+      }
+
+      .hero-image {
+        order: -1;
+      }
+
+      .steps {
+        grid-template-columns: 1fr;
+      }
+
+      .nav-links {
+        display: none;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .hero-text h1 {
+        font-size: 36px;
+      }
+
+      .section-title {
+        font-size: 28px;
+      }
+
+      .download-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="container">
+      <a href="#" class="nav-logo">maskr<span>_</span></a>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#formats">Formats</a></li>
+      </ul>
+      <a href="#download" class="nav-cta">Download</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-text">
+          <h1>maskr<span>_</span></h1>
+          <p class="hero-tagline"># document sanitizer</p>
+          <p class="hero-description">
+            Detect and mask sensitive information in documents before sharing.
+            Names, emails, phone numbers, SSNs, credit cards, and more — all processed
+            <strong>100% locally</strong> on your device.
+          </p>
+          <div class="hero-buttons">
+            <a href="#download" class="btn btn-primary">
+              Download Free
+            </a>
+            <a href="https://github.com/iYassr/maskr" class="btn btn-secondary" target="_blank">
+              View on GitHub
+            </a>
+          </div>
+        </div>
+        <div class="hero-image">
+          <img src="assets/review.png" alt="maskr detection review screen">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Demo -->
+  <section class="demo" id="demo">
+    <div class="container">
+      <h2 class="section-title">See It In Action</h2>
+      <p class="section-subtitle">Upload, review, and export sanitized documents in seconds</p>
+      <div class="demo-video">
+        <img src="assets/demo.gif" alt="maskr demo workflow">
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features" id="features">
+    <div class="container">
+      <h2 class="section-title">Why maskr?</h2>
+      <p class="section-subtitle">Privacy-first document sanitization for the modern world</p>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3>100% Local Processing</h3>
+          <p>All analysis happens on your device. No data ever leaves your machine, no cloud services involved.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🌐</div>
+          <h3>No Internet Required</h3>
+          <p>Works completely offline. Perfect for air-gapped environments and sensitive data handling.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <h3>Smart Detection</h3>
+          <p>Automatically detects names, emails, phone numbers, SSNs, credit cards, IBANs, and more.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📄</div>
+          <h3>Multiple Formats</h3>
+          <p>Supports PDF, DOCX, XLSX, TXT, MD, CSV, HTML, and images with OCR.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎨</div>
+          <h3>Custom Keywords</h3>
+          <p>Add your own names and keywords for project-specific detection with 100% confidence.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🖼️</div>
+          <h3>Logo Detection</h3>
+          <p>Detect and remove company logos from DOCX files using perceptual hashing.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="how-it-works" id="how-it-works">
+    <div class="container">
+      <h2 class="section-title">How It Works</h2>
+      <p class="section-subtitle">Three simple steps to protect sensitive information</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>Upload</h3>
+          <p>Drag and drop a document or paste text directly</p>
+          <div class="step-image">
+            <img src="assets/upload.png" alt="Upload step">
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>Review</h3>
+          <p>See all detected items with confidence scores</p>
+          <div class="step-image">
+            <img src="assets/review.png" alt="Review step">
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>Export</h3>
+          <p>Download the sanitized document</p>
+          <div class="step-image">
+            <img src="assets/export.png" alt="Export step">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Formats -->
+  <section class="formats" id="formats">
+    <div class="container">
+      <h2 class="section-title">Supported Formats</h2>
+      <p class="section-subtitle">Wide format support with specialized capabilities</p>
+      <div class="formats-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Format</th>
+              <th>Parse</th>
+              <th>Export</th>
+              <th>OCR</th>
+              <th>Logo Detection</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>PDF</td>
+              <td class="check">✓</td>
+              <td class="check">✓</td>
+              <td class="dash">—</td>
+              <td class="dash">—</td>
+            </tr>
+            <tr>
+              <td>DOCX</td>
+              <td class="check">✓</td>
+              <td class="check">✓</td>
+              <td class="dash">—</td>
+              <td class="check">✓</td>
+            </tr>
+            <tr>
+              <td>XLSX</td>
+              <td class="check">✓</td>
+              <td class="check">✓</td>
+              <td class="dash">—</td>
+              <td class="dash">—</td>
+            </tr>
+            <tr>
+              <td>TXT / MD</td>
+              <td class="check">✓</td>
+              <td class="check">✓</td>
+              <td class="dash">—</td>
+              <td class="dash">—</td>
+            </tr>
+            <tr>
+              <td>CSV / JSON</td>
+              <td class="check">✓</td>
+              <td class="check">✓</td>
+              <td class="dash">—</td>
+              <td class="dash">—</td>
+            </tr>
+            <tr>
+              <td>HTML</td>
+              <td class="check">✓</td>
+              <td class="check">✓</td>
+              <td class="dash">—</td>
+              <td class="dash">—</td>
+            </tr>
+            <tr>
+              <td>PNG / JPG / WebP</td>
+              <td class="check">✓</td>
+              <td class="dash">—</td>
+              <td class="check">✓</td>
+              <td class="dash">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download -->
+  <section class="download" id="download">
+    <div class="container">
+      <h2 class="section-title">Download maskr</h2>
+      <p class="section-subtitle">Free and open source. Available for all platforms.</p>
+      <div class="download-buttons">
+        <a href="https://github.com/iYassr/maskr/releases/latest" class="download-btn">
+          <span class="platform">🍎</span>
+          <span class="name">macOS</span>
+          <span class="version">Intel & Apple Silicon</span>
+        </a>
+        <a href="https://github.com/iYassr/maskr/releases/latest" class="download-btn">
+          <span class="platform">🪟</span>
+          <span class="name">Windows</span>
+          <span class="version">Installer & Portable</span>
+        </a>
+        <a href="https://github.com/iYassr/maskr/releases/latest" class="download-btn">
+          <span class="platform">🐧</span>
+          <span class="name">Linux</span>
+          <span class="version">AppImage & .deb</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>
+        Made with privacy in mind ·
+        <a href="https://github.com/iYassr/maskr" target="_blank">GitHub</a> ·
+        <a href="https://github.com/iYassr/maskr/blob/main/LICENSE" target="_blank">MIT License</a>
+      </p>
+    </div>
+  </footer>
+</body>
+</html>
