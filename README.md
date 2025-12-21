@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="logos/final/maskr-logo-icon-square.svg" alt="maskr Logo" width="120" height="120">
+  <img src="logos/final/maskr-logo-banner.svg" alt="maskr" width="500">
 </p>
-
-<h1 align="center">maskr</h1>
 
 <p align="center">
   <strong>A privacy-focused desktop app for detecting and masking sensitive information in documents</strong>
