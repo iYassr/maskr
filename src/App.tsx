@@ -4,6 +4,7 @@ import { UploadStep } from './components/UploadStep'
 import { ReviewStep } from './components/ReviewStep'
 import { ExportStep } from './components/ExportStep'
 import { Check } from './components/ui/icons'
+import { ThemeToggle } from './components/ui/theme-toggle'
 
 type Step = 'upload' | 'review' | 'export'
 
@@ -124,7 +125,10 @@ export default function App() {
 
       {/* Footer */}
       <footer className="flex-shrink-0 px-4 py-2 flex items-center justify-between text-xs bg-muted border-t border-border text-muted-foreground">
-        <span>maskr v1.3</span>
+        <div className="flex items-center gap-2">
+          <span>maskr v1.3</span>
+          <ThemeToggle />
+        </div>
         <span>Secure document sanitization</span>
       </footer>
     </div>
