@@ -14,6 +14,7 @@ maskr is an Electron desktop app for detecting and masking sensitive information
 - **Push when asked** - Only push/release when explicitly requested
 - **No unnecessary files** - Don't create documentation unless asked
 - **Use latest stable packages** - Always use current stable versions, not outdated or beta
+- **Use shadcn/ui components** - Prefer built-in shadcn components when available, don't reinvent
 
 ## Things NOT To Do
 - Don't refactor code unless explicitly asked
