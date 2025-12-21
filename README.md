@@ -98,12 +98,43 @@ Preview the sanitized document with all sensitive data replaced by placeholders.
 
 ## Installation
 
-### Prerequisites
+### Download Pre-built Releases
+
+Download the latest release for your platform from the [Releases page](https://github.com/iYassr/maskr/releases).
+
+#### macOS
+1. Download `Maskr-1.3.0-arm64-mac.zip` (Apple Silicon) or `Maskr-1.3.0-mac.zip` (Intel)
+2. Extract the zip file
+3. **Important:** Remove the quarantine flag before first run:
+   ```bash
+   xattr -cr /path/to/Maskr.app
+   ```
+   For example, if extracted to Downloads:
+   ```bash
+   xattr -cr ~/Downloads/Maskr.app
+   ```
+4. Drag to Applications folder (optional)
+
+> **Why is this needed?** macOS quarantines apps downloaded from the internet. Since maskr is not yet notarized with Apple, you need to manually remove this flag.
+
+#### Windows
+- `Maskr Setup 1.3.0.exe` - Standard installer
+- `Maskr 1.3.0.exe` - Portable version (no installation required)
+
+#### Linux
+- `.AppImage` - Universal format, make executable with `chmod +x` and run
+- `.deb` - For Debian/Ubuntu: `sudo dpkg -i maskr_1.3.0_amd64.deb`
+
+---
+
+### Build from Source
+
+#### Prerequisites
 
 - **Node.js** 24+ (LTS recommended)
 - **npm** (comes with Node.js)
 
-### Quick Start
+#### Quick Start
 
 ```bash
 # Clone the repository
@@ -206,11 +237,18 @@ Create custom profiles via the Profiles menu.
 
 ## Troubleshooting
 
+### macOS "App is damaged" Error
+If you see "Maskr.app is damaged and can't be opened", run:
+```bash
+xattr -cr /path/to/Maskr.app
+```
+This removes the quarantine flag that macOS adds to downloaded apps.
+
 ### Node.js Version Error
 ```bash
 # Using nvm
-nvm install 22
-nvm use 22
+nvm install 24
+nvm use 24
 ```
 
 ### Logo Detection Not Working
