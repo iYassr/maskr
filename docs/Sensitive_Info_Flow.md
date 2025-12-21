@@ -1,8 +1,8 @@
-# Maskr - Sensitive Information Detection Flow
+# maskr - Sensitive Information Detection Flow
 
 ## Overview
 
-Maskr uses a multi-layered detection system to identify and mask sensitive information in documents. The system combines regex-based pattern matching, NLP-based name detection using compromise.js, and user-defined custom patterns. All processing happens 100% locally on the user's machine.
+maskr uses a multi-layered detection system to identify and mask sensitive information in documents. The system combines regex-based pattern matching, NLP-based name detection using compromise.js, and user-defined custom patterns. All processing happens 100% locally on the user's machine.
 
 ---
 

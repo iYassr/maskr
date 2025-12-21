@@ -1,4 +1,4 @@
-# Product Requirements Document: Maskr
+# Product Requirements Document: maskr
 ## Sensitive Information Detection & Masking Desktop Application
 
 **Version:** 1.2.0
@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-Maskr is a desktop application (built with Electron) that automatically detects and masks sensitive information in documents before they are shared with AI applications or external parties. The tool scans uploaded documents for PII, company-specific information, financial data, and other configurable sensitive patterns, then replaces them with safe placeholder tokens. All processing happens locally on the user's machine—no data ever leaves the device.
+maskr is a desktop application (built with Electron) that automatically detects and masks sensitive information in documents before they are shared with AI applications or external parties. The tool scans uploaded documents for PII, company-specific information, financial data, and other configurable sensitive patterns, then replaces them with safe placeholder tokens. All processing happens locally on the user's machine—no data ever leaves the device.
 
 ---
 
@@ -255,7 +255,7 @@ The configuration panel should include:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Maskr                                     [Config] [Help] [⚙]  │
+│  maskr                                     [Config] [Help] [⚙]  │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────┐   │
@@ -274,7 +274,7 @@ The configuration panel should include:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Maskr                                     [Config] [Help] [⚙]  │
+│  maskr                                     [Config] [Help] [⚙]  │
 ├─────────────────────────────────────────────────────────────────┤
 │  document.docx                    Detected: 23 items   [Scan]  │
 ├───────────────────────────────────┬─────────────────────────────┤
@@ -531,7 +531,7 @@ declare global {
 ```yaml
 # electron-builder.yml
 appId: com.maskr.app
-productName: Maskr
+productName: maskr
 copyright: Copyright © 2024
 
 directories:

@@ -1,6 +1,6 @@
-# Maskr Logo Assets
+# maskr Logo Assets
 
-This folder contains the official Maskr logo in various formats and configurations for different use cases.
+This folder contains the official maskr logo in various formats and configurations for different use cases.
 
 ---
 

@@ -1,6 +1,6 @@
-# Contributing to Maskr
+# Contributing to maskr
 
-Thank you for your interest in contributing to Maskr! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to maskr! This document provides guidelines and instructions for contributing.
 
 ## Code of Conduct
 
@@ -11,7 +11,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
 ### Reporting Bugs
 
 Before submitting a bug report:
-1. Check the [existing issues](https://github.com/iYassr/Maskr/issues) to avoid duplicates
+1. Check the [existing issues](https://github.com/iYassr/maskr/issues) to avoid duplicates
 2. Update to the latest version to see if the issue persists
 
 When reporting a bug, include:
@@ -27,7 +27,7 @@ When reporting a bug, include:
 Feature suggestions are welcome! Please:
 1. Check existing issues for similar suggestions
 2. Provide a clear use case
-3. Explain how the feature aligns with Maskr's privacy-first mission
+3. Explain how the feature aligns with maskr's privacy-first mission
 
 ### Pull Requests
 
@@ -49,8 +49,8 @@ Feature suggestions are welcome! Please:
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/Maskr.git
-cd Maskr
+git clone https://github.com/YOUR_USERNAME/maskr.git
+cd maskr
 
 # Install dependencies
 npm install
@@ -147,7 +147,7 @@ npm run test:headed
 
 ## Security Considerations
 
-Maskr handles sensitive documents. When contributing:
+maskr handles sensitive documents. When contributing:
 
 - **Never log sensitive data** in console or error messages
 - **Don't add network requests** - all processing must remain local
@@ -158,4 +158,4 @@ Maskr handles sensitive documents. When contributing:
 
 Feel free to open an issue for any questions about contributing.
 
-Thank you for helping make Maskr better!
+Thank you for helping make maskr better!

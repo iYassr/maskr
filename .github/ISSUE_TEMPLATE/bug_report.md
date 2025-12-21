@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a bug to help us improve Maskr
+about: Report a bug to help us improve maskr
 title: '[Bug] '
 labels: bug
 assignees: ''
@@ -27,7 +27,7 @@ If applicable, add screenshots to help explain the problem.
 ## Environment
 - **OS**: [e.g., macOS 14.0, Windows 11, Ubuntu 22.04]
 - **Node.js version**: [e.g., 22.12.0]
-- **Maskr version**: [e.g., 1.0.0]
+- **maskr version**: [e.g., 1.0.0]
 
 ## Document Information
 - **File type**: [e.g., DOCX, PDF, TXT]

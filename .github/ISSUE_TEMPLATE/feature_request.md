@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest a new feature for Maskr
+about: Suggest a new feature for maskr
 title: '[Feature] '
 labels: enhancement
 assignees: ''
@@ -19,7 +19,7 @@ Have you considered any alternative solutions or workarounds?
 Describe how you would use this feature in your workflow.
 
 ## Privacy Considerations
-Does this feature maintain Maskr's privacy-first approach?
+Does this feature maintain maskr's privacy-first approach?
 - [ ] All processing remains local (no network requests)
 - [ ] No data leaves the user's machine
 - [ ] No telemetry or tracking added
@@ -29,4 +29,4 @@ Add any other context, mockups, or examples here.
 
 ## Checklist
 - [ ] I have searched existing issues to ensure this isn't a duplicate
-- [ ] This feature aligns with Maskr's mission of local, privacy-focused document sanitization
+- [ ] This feature aligns with maskr's mission of local, privacy-focused document sanitization
