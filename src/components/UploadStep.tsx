@@ -493,7 +493,7 @@ export function UploadStep({ onFileUploaded }: UploadStepProps) {
                   <span>Processing...</span>
                 </>
               ) : (
-                <span>Scan Text →</span>
+                <span>Sanitize Text →</span>
               )}
             </button>
           </div>
