@@ -60,10 +60,16 @@ Preview the sanitized document with all sensitive data replaced by placeholders.
 - **No Telemetry** - Zero data collection or tracking
 - **No Cloud Services** - Your documents stay on your machine
 
+### User Experience
+- **Direct Text Input** - Paste text directly without uploading a file
+- **Light/Dark Theme** - Toggle between themes with persistent preference
+- **Drag & Drop** - Simply drop files to start scanning
+
 ### Smart Detection
 - **Person Names** - Automatic NLP detection using compromise.js (first + last names)
 - **Email Addresses** - Personal and corporate emails
 - **Phone Numbers** - US, UK, Saudi, and international formats
+- **Social Security Numbers** - US SSN format (XXX-XX-XXXX)
 - **Saudi National IDs** - 10-digit IDs starting with 1 (citizens) or 2 (residents/Iqama)
 - **Credit Cards** - With Luhn algorithm validation
 - **IBANs** - International bank account numbers with validation
@@ -103,7 +109,7 @@ Preview the sanitized document with all sensitive data replaced by placeholders.
 Download the latest release for your platform from the [Releases page](https://github.com/iYassr/maskr/releases).
 
 #### macOS
-1. Download `maskr-1.3.0-arm64-mac.zip` (Apple Silicon) or `maskr-1.3.0-mac.zip` (Intel)
+1. Download `maskr-1.3.1-arm64-mac.zip` (Apple Silicon) or `maskr-1.3.1-mac.zip` (Intel)
 2. Extract the zip file
 3. **Important:** Remove the quarantine flag before first run:
    ```bash
@@ -118,12 +124,12 @@ Download the latest release for your platform from the [Releases page](https://g
 > **Why is this needed?** macOS quarantines apps downloaded from the internet. Since maskr is not yet notarized with Apple, you need to manually remove this flag.
 
 #### Windows
-- `maskr Setup 1.3.0.exe` - Standard installer
-- `maskr 1.3.0.exe` - Portable version (no installation required)
+- `maskr-1.3.1-setup.exe` - Standard installer
+- `maskr-1.3.1-portable.exe` - Portable version (no installation required)
 
 #### Linux
 - `.AppImage` - Universal format, make executable with `chmod +x` and run
-- `.deb` - For Debian/Ubuntu: `sudo dpkg -i maskr_1.3.0_amd64.deb`
+- `.deb` - For Debian/Ubuntu: `sudo dpkg -i maskr_1.3.1_amd64.deb`
 
 ---
 
@@ -202,7 +208,7 @@ These will be detected with 100% confidence.
 
 | Category | Color | Examples |
 |----------|-------|----------|
-| **PII** | Red | Names, emails, phones, Saudi IDs |
+| **PII** | Red | Names, emails, phones, SSNs, Saudi IDs |
 | **Company** | Blue | Organization names, logos |
 | **Financial** | Green | Credit cards, IBANs, amounts |
 | **Technical** | Purple | IP addresses, URLs, domains |
