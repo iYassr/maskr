@@ -1,27 +1,64 @@
+/**
+ * @fileoverview Electron Preload Script
+ *
+ * This script runs in a sandboxed context and bridges the main process
+ * (Node.js) with the renderer process (browser). It exposes a safe API
+ * to the renderer via contextBridge.
+ *
+ * Security:
+ * - Context isolation is enabled
+ * - Only whitelisted IPC channels are exposed
+ * - Menu event listeners are validated
+ *
+ * The exposed API is available as `window.api` in the renderer.
+ *
+ * @module electron/preload
+ */
+
 import { contextBridge, ipcRenderer } from 'electron'
 
+/**
+ * File data structure returned from file operations.
+ */
 export interface FileData {
+  /** Full file path */
   filePath: string
+  /** File name only */
   fileName: string
+  /** File extension (e.g., '.pdf') */
   extension: string
-  buffer: string // base64 encoded
+  /** File content as base64 string */
+  buffer: string
+  /** File size in bytes */
   size: number
 }
 
+/**
+ * Result of document parsing operation.
+ */
 export interface ParsedDocument {
+  /** Whether parsing succeeded */
   success: boolean
+  /** Extracted text content */
   content?: string
+  /** Detected file format */
   format?: string
+  /** Document metadata */
   metadata?: {
     title?: string
     author?: string
     pages?: number
     sheets?: string[]
   }
+  /** Whether document contains embedded images */
   hasImages?: boolean
+  /** Error message if parsing failed */
   error?: string
 }
 
+/**
+ * Result of Named Entity Recognition.
+ */
 export interface NERResult {
   success: boolean
   entities?: Array<{
@@ -97,15 +134,27 @@ export interface LogoScanResult {
   error?: string
 }
 
+// ============================================================================
+// API OBJECT
+// ============================================================================
+
+/**
+ * The API object exposed to the renderer process via contextBridge.
+ * Available as `window.api` in React components.
+ */
 const api = {
-  // File operations
+  // ----- File Operations -----
+  /** Opens a file dialog and returns the selected file data */
   openFile: (): Promise<FileData | null> => ipcRenderer.invoke('dialog:openFile'),
+  /** Opens a save dialog and writes data to disk */
   saveFile: (data: string, defaultName: string, format?: string): Promise<string | null> =>
     ipcRenderer.invoke('dialog:saveFile', data, defaultName, format),
+  /** Reads a file from disk (used for drag-and-drop) */
   readFile: (filePath: string): Promise<FileData | null> =>
     ipcRenderer.invoke('file:read', filePath),
 
-  // Document processing
+  // ----- Document Processing -----
+  /** Parses a document and extracts text content */
   parseDocument: (filePath: string, bufferBase64: string): Promise<ParsedDocument> =>
     ipcRenderer.invoke('document:parse', filePath, bufferBase64),
   createMaskedDocument: (

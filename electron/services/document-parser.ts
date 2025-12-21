@@ -1,27 +1,81 @@
+/**
+ * @fileoverview Document Parser Service
+ *
+ * This module handles parsing various document formats to extract text content.
+ * It supports multiple formats with format-specific parsing strategies:
+ *
+ * - Text: Plain text (txt, md) - UTF-8 decode
+ * - Office: Word (docx via mammoth), Excel (xlsx via exceljs), CSV
+ * - PDF: Via pdfjs-dist with pdf-lib fallback
+ * - Data: JSON (pretty-printed), HTML (tags stripped)
+ * - Images: Returns buffer for OCR processing
+ *
+ * Also provides functions to create masked versions of documents.
+ *
+ * @module electron/services/document-parser
+ */
+
 import mammoth from 'mammoth'
 import ExcelJS from 'exceljs'
 import { PDFDocument } from 'pdf-lib'
 import path from 'path'
 import JSZip from 'jszip'
 
+/**
+ * Result of parsing a document.
+ */
 export interface ParsedDocument {
+  /** Extracted text content */
   content: string
+  /** Original file format */
   format: string
+  /** Document metadata (when available) */
   metadata?: {
+    /** Document title */
     title?: string
+    /** Document author */
     author?: string
+    /** Number of pages (PDF) */
     pages?: number
+    /** Sheet names (Excel) */
     sheets?: string[]
   }
+  /** Embedded images (for logo detection) */
   images?: {
+    /** Unique image identifier */
     id: string
+    /** Image data as Buffer */
     data: Buffer
+    /** MIME type (e.g., 'image/png') */
     contentType: string
   }[]
 }
 
+/**
+ * Supported file format extensions.
+ */
 export type SupportedFormat = 'txt' | 'md' | 'docx' | 'xlsx' | 'csv' | 'pdf' | 'json' | 'html' | 'png' | 'jpg' | 'jpeg' | 'gif' | 'bmp' | 'webp' | 'tiff'
 
+// ============================================================================
+// MAIN PARSER
+// ============================================================================
+
+/**
+ * Parses a document and extracts text content.
+ *
+ * Automatically detects format from file extension and uses
+ * the appropriate parsing strategy.
+ *
+ * @param filePath - Original filename (for format detection)
+ * @param buffer - Document content as Buffer
+ * @returns ParsedDocument with text content and metadata
+ * @throws Error if format is unsupported
+ *
+ * @example
+ * const buffer = await fs.readFile('document.pdf')
+ * const result = await parseDocument('document.pdf', buffer)
+ * console.log(result.content) // Extracted text
+ */
 export async function parseDocument(filePath: string, buffer: Buffer): Promise<ParsedDocument> {
   const ext = path.extname(filePath).toLowerCase().slice(1) as SupportedFormat
 
@@ -54,11 +108,25 @@ export async function parseDocument(filePath: string, buffer: Buffer): Promise<P
   }
 }
 
+// ============================================================================
+// FORMAT-SPECIFIC PARSERS
+// ============================================================================
+
+/**
+ * Parses plain text files (TXT, MD).
+ * Simply decodes UTF-8 content.
+ * @internal
+ */
 async function parseTextFile(buffer: Buffer, format: string): Promise<ParsedDocument> {
   const content = buffer.toString('utf-8')
   return { content, format }
 }
 
+/**
+ * Handles image files for OCR processing.
+ * Returns empty content - actual text extracted by OCR service.
+ * @internal
+ */
 async function parseImage(buffer: Buffer, format: string): Promise<ParsedDocument> {
   // Return the image buffer for OCR processing - content will be filled by OCR
   const contentType = format === 'jpg' ? 'image/jpeg' : `image/${format}`
@@ -75,6 +143,16 @@ async function parseImage(buffer: Buffer, format: string): Promise<ParsedDocumen
   }
 }
 
+/**
+ * Parses DOCX files using mammoth library.
+ *
+ * Extracts:
+ * - Raw text content
+ * - Embedded images from word/media/ folder (for logo detection)
+ *
+ * Skips Windows metafiles (EMF, WMF).
+ * @internal
+ */
 async function parseDocx(buffer: Buffer): Promise<ParsedDocument> {
   const result = await mammoth.extractRawText({ buffer })
   const images: ParsedDocument['images'] = []
@@ -121,6 +199,16 @@ async function parseDocx(buffer: Buffer): Promise<ParsedDocument> {
   }
 }
 
+/**
+ * Parses Excel XLSX files using exceljs library.
+ *
+ * Output format:
+ * - Sheet name headers: "--- Sheet: Name ---"
+ * - Tab-separated values for each row
+ * - Date values converted to ISO format
+ *
+ * @internal
+ */
 async function parseXlsx(buffer: Buffer): Promise<ParsedDocument> {
   const workbook = new ExcelJS.Workbook()
   await workbook.xlsx.load(buffer)
@@ -153,11 +241,26 @@ async function parseXlsx(buffer: Buffer): Promise<ParsedDocument> {
   }
 }
 
+/**
+ * Parses CSV files.
+ * Returns raw content for NER processing.
+ * @internal
+ */
 async function parseCsv(buffer: Buffer): Promise<ParsedDocument> {
   const content = buffer.toString('utf-8')
   return { content, format: 'csv' }
 }
 
+/**
+ * Parses PDF files using pdfjs-dist.
+ *
+ * Features:
+ * - Extracts text from all pages
+ * - Retrieves metadata (title, author, page count)
+ * - Falls back to pdf-lib if pdfjs fails
+ *
+ * @internal
+ */
 async function parsePdf(buffer: Buffer): Promise<ParsedDocument> {
   // Use pdfjs-dist for robust PDF text extraction
   try {
@@ -248,6 +351,12 @@ async function parsePdf(buffer: Buffer): Promise<ParsedDocument> {
   }
 }
 
+/**
+ * Parses JSON files.
+ * Pretty-prints the JSON for better readability.
+ * Returns raw content if JSON parsing fails.
+ * @internal
+ */
 async function parseJson(buffer: Buffer): Promise<ParsedDocument> {
   const content = buffer.toString('utf-8')
   try {
@@ -262,6 +371,11 @@ async function parseJson(buffer: Buffer): Promise<ParsedDocument> {
   }
 }
 
+/**
+ * Parses HTML files.
+ * Strips all HTML tags, scripts, and styles to extract plain text.
+ * @internal
+ */
 async function parseHtml(buffer: Buffer): Promise<ParsedDocument> {
   const content = buffer.toString('utf-8')
 
@@ -279,7 +393,20 @@ async function parseHtml(buffer: Buffer): Promise<ParsedDocument> {
   }
 }
 
-// Export functions for rebuilding documents
+// ============================================================================
+// MASKED DOCUMENT CREATION
+// ============================================================================
+
+/**
+ * Creates a masked DOCX document with placeholder text.
+ *
+ * Note: Does not preserve original formatting. Creates a new document
+ * with simple text paragraphs.
+ *
+ * @param originalBuffer - Original document (unused, kept for API consistency)
+ * @param maskedContent - Text with placeholders replacing sensitive data
+ * @returns Buffer containing the new DOCX file
+ */
 export async function createMaskedDocx(
   originalBuffer: Buffer,
   maskedContent: string
@@ -307,6 +434,16 @@ export async function createMaskedDocx(
   return await Packer.toBuffer(doc)
 }
 
+/**
+ * Creates a masked XLSX document.
+ *
+ * Parses the masked content (sheet headers and tab-separated rows)
+ * and creates a new workbook. Does not preserve original formatting.
+ *
+ * @param originalBuffer - Original document (unused, kept for API consistency)
+ * @param maskedContent - Text with sheet headers and tab-separated values
+ * @returns Buffer containing the new XLSX file
+ */
 export async function createMaskedXlsx(
   originalBuffer: Buffer,
   maskedContent: string
@@ -331,6 +468,21 @@ export async function createMaskedXlsx(
   return Buffer.from(await workbook.xlsx.writeBuffer())
 }
 
+/**
+ * Creates a masked PDF document.
+ *
+ * Creates a new PDF with:
+ * - A4 page size (595 x 842 points)
+ * - Helvetica font at 10pt
+ * - 50pt margins
+ * - Automatic page breaks
+ *
+ * Long lines are truncated to 100 characters.
+ *
+ * @param originalBuffer - Original document (unused, kept for API consistency)
+ * @param maskedContent - Text with placeholders replacing sensitive data
+ * @returns Buffer containing the new PDF file
+ */
 export async function createMaskedPdf(
   originalBuffer: Buffer,
   maskedContent: string

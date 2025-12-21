@@ -1,3 +1,19 @@
+/**
+ * @fileoverview Electron Main Process
+ *
+ * This is the main entry point for the maskr Electron application.
+ * It handles:
+ * - Window creation and lifecycle management
+ * - IPC (Inter-Process Communication) handlers for renderer communication
+ * - File dialogs and system interactions
+ * - Coordination between services (parsing, detection, OCR, etc.)
+ *
+ * Security: All IPC handlers validate inputs before processing.
+ * The renderer process cannot access Node.js APIs directly.
+ *
+ * @module electron/main
+ */
+
 import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 import { fileURLToPath } from 'url'
 import path from 'path'
@@ -42,12 +58,27 @@ import {
   validateThreshold
 } from './services/security.js'
 
+/** Current directory path (ESM equivalent of __dirname) */
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+/** Reference to the main application window */
 let mainWindow: BrowserWindow | null = null
 
+/** Vite dev server URL (only set in development mode) */
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
+/**
+ * Creates the main application window with security-focused configuration.
+ *
+ * Window features:
+ * - Context isolation enabled (renderer cannot access Node.js)
+ * - Node integration disabled
+ * - Sandbox mode enabled
+ * - Preload script for safe IPC bridge
+ *
+ * In development: Loads from Vite dev server and opens DevTools
+ * In production: Loads from built dist/index.html
+ */
 function createWindow() {
   // Icon path for development mode (in production, electron-builder handles this)
   const iconPath = path.join(__dirname, '..', 'resources', 'icon.png')
@@ -112,9 +143,24 @@ app.on('activate', () => {
   }
 })
 
-// IPC Handlers
+// ============================================================================
+// IPC HANDLERS
+// ============================================================================
+// All handlers follow a consistent pattern:
+// 1. Validate inputs using security utilities
+// 2. Process the request
+// 3. Return { success: true, ...data } or { success: false, error: string }
+// ============================================================================
 
-// Open file dialog
+/**
+ * Opens a native file dialog for selecting documents.
+ *
+ * @returns FileData object with file contents as base64, or null if cancelled
+ *
+ * Supported formats:
+ * - Documents: txt, md, docx, xlsx, pdf, csv, json, html
+ * - Images (OCR): png, jpg, jpeg, gif, bmp, webp, tiff
+ */
 ipcMain.handle('dialog:openFile', async () => {
   const result = await dialog.showOpenDialog(mainWindow!, {
     properties: ['openFile'],
@@ -148,7 +194,14 @@ ipcMain.handle('dialog:openFile', async () => {
   }
 })
 
-// Save file dialog
+/**
+ * Opens a native save dialog and writes file to disk.
+ *
+ * @param data - Base64-encoded file content
+ * @param defaultName - Suggested filename for the save dialog
+ * @param format - Optional file format override (docx, xlsx, pdf, txt, etc.)
+ * @returns The saved file path, or null if cancelled
+ */
 ipcMain.handle(
   'dialog:saveFile',
   async (_event, data: string, defaultName: string, format?: string) => {
@@ -185,7 +238,18 @@ ipcMain.handle(
   }
 )
 
-// Read file content (for drag and drop)
+/**
+ * Reads file content from disk (used for drag-and-drop).
+ *
+ * Security validations:
+ * - Path must be absolute and within user-accessible directories
+ * - No path traversal allowed
+ * - File extension must be in allowed list
+ * - Maximum file size: 50MB
+ *
+ * @param filePath - Absolute path to the file
+ * @returns FileData object with base64 content, or null if validation fails
+ */
 ipcMain.handle('file:read', async (_event, filePath: string) => {
   try {
     // Validate file path for security
@@ -219,7 +283,22 @@ ipcMain.handle('file:read', async (_event, filePath: string) => {
   }
 })
 
-// Parse document - extract text content from various formats
+/**
+ * Parses a document and extracts text content.
+ *
+ * Supports multiple formats with format-specific parsing:
+ * - Text: txt, md (UTF-8 decode)
+ * - Office: docx (mammoth), xlsx (exceljs), csv
+ * - PDF: pdfjs-dist with pdf-lib fallback
+ * - Data: json (pretty-printed), html (tags stripped)
+ * - Images: Returns buffer for OCR processing
+ *
+ * For DOCX files, also extracts embedded images for logo detection.
+ *
+ * @param fileName - Original filename (used to determine format)
+ * @param bufferBase64 - File content as base64 string
+ * @returns ParsedDocument with content, format, metadata, and images
+ */
 ipcMain.handle('document:parse', async (_event, fileName: string, bufferBase64: string) => {
   try {
     // Validate file extension (buffer already provided, just need format check)
@@ -259,7 +338,26 @@ ipcMain.handle('document:parse', async (_event, fileName: string, bufferBase64: 
   }
 })
 
-// NER - Extract named entities
+/**
+ * Extracts named entities from text using NER (Named Entity Recognition).
+ *
+ * Detection types (in order of processing):
+ * 1. Custom names (user-defined, 100% confidence)
+ * 2. Full names (NLP via compromise, 85% confidence)
+ * 3. Financial amounts (currency symbols required)
+ * 4. Credit cards (Luhn validation)
+ * 5. IBANs (Mod97 checksum validation)
+ * 6. IP addresses (IPv4/IPv6)
+ * 7. Phone numbers (international formats)
+ * 8. Email addresses
+ * 9. URLs
+ * 10. Domain names
+ * 11. Saudi IDs (National ID/Iqama)
+ *
+ * @param text - Text content to analyze
+ * @param customNames - Optional array of user-defined names to detect
+ * @returns NERResult with entities array containing text, type, position, confidence
+ */
 ipcMain.handle('ner:extract', async (_event, text: string, customNames?: string[]) => {
   try {
     // Validate text input
@@ -304,7 +402,20 @@ ipcMain.handle('ner:extract', async (_event, text: string, customNames?: string[
   }
 })
 
-// Create masked document
+/**
+ * Creates a masked version of a document with sensitive data replaced.
+ *
+ * Format-specific handling:
+ * - DOCX: Creates new document with masked text (formatting not preserved)
+ * - XLSX: Creates new workbook with masked content
+ * - PDF: Creates new PDF with masked text (A4 format)
+ * - Text formats: Returns masked text as UTF-8
+ *
+ * @param originalBufferBase64 - Original document as base64 (for format reference)
+ * @param maskedContent - Text with placeholders replacing sensitive data
+ * @param format - Output format (docx, xlsx, pdf, txt, md, json, csv, html)
+ * @returns MaskedDocumentResult with base64-encoded output buffer
+ */
 ipcMain.handle(
   'document:createMasked',
   async (_event, originalBufferBase64: string, maskedContent: string, format: string) => {
@@ -369,7 +480,18 @@ ipcMain.handle('app:getPlatform', () => {
   return process.platform
 })
 
-// OCR - Extract text from image
+/**
+ * Extracts text from an image using OCR (Tesseract.js).
+ *
+ * Preprocessing (if Sharp available):
+ * - Grayscale conversion
+ * - Contrast enhancement
+ * - Normalization
+ *
+ * @param imageBufferBase64 - Image data as base64 string
+ * @param language - OCR language code (default: 'eng'). Must be 3 lowercase letters.
+ * @returns OCRResult with extracted text, confidence score, and word bounding boxes
+ */
 ipcMain.handle('ocr:extractText', async (_event, imageBufferBase64: string, language?: string) => {
   try {
     // Validate buffer size
@@ -411,7 +533,16 @@ ipcMain.handle('ocr:extractText', async (_event, imageBufferBase64: string, lang
   }
 })
 
-// OCR - Extract text from multiple images
+/**
+ * Extracts text from multiple images using batch OCR processing.
+ *
+ * Used for documents with multiple embedded images (e.g., DOCX with figures).
+ * Maximum batch size: 50 images.
+ *
+ * @param imageBuffersBase64 - Array of image buffers as base64 strings
+ * @param language - OCR language code (default: 'eng')
+ * @returns OCRBatchResult with individual results and combined text
+ */
 ipcMain.handle(
   'ocr:extractTextBatch',
   async (_event, imageBuffersBase64: string[], language?: string) => {
@@ -462,7 +593,14 @@ ipcMain.handle(
   }
 )
 
-// Profile management
+// ============================================================================
+// PROFILE MANAGEMENT HANDLERS
+// ============================================================================
+// Profiles allow users to save and switch between detection configurations.
+// Default profiles: 'default', 'strict', 'minimal'
+// ============================================================================
+
+/** Returns all available configuration profiles */
 ipcMain.handle('profiles:getAll', () => {
   return getAllProfiles()
 })
@@ -520,14 +658,36 @@ ipcMain.handle('profiles:create', (_event, name: string, config: ConfigProfile['
   return createProfile(name, config)
 })
 
-// Logo detection handlers
+// ============================================================================
+// LOGO DETECTION HANDLERS
+// ============================================================================
+// Logo detection uses perceptual hashing (aHash algorithm) to find similar
+// images in documents. Requires Sharp library for image processing.
+// ============================================================================
 
-// Check if Sharp is available for logo detection
+/**
+ * Checks if Sharp library is available for logo detection.
+ * Sharp is an optional dependency - logo detection gracefully degrades if missing.
+ * @returns true if Sharp is available, false otherwise
+ */
 ipcMain.handle('logo:isAvailable', () => {
   return isSharpAvailable()
 })
 
-// Compute hash for an uploaded logo image
+/**
+ * Computes perceptual hash for a logo image.
+ *
+ * Algorithm: Average Hash (aHash)
+ * 1. Resize image to 8x8 pixels
+ * 2. Convert to grayscale
+ * 3. Compute average luminance
+ * 4. Generate 64-bit binary hash based on pixel vs average comparison
+ *
+ * Also creates a thumbnail preview (128px) for the UI.
+ *
+ * @param imageBufferBase64 - Logo image as base64 string
+ * @returns LogoHashResult with hash, thumbnail, and dimensions
+ */
 ipcMain.handle('logo:computeHash', async (_event, imageBufferBase64: string) => {
   try {
     // Validate buffer size
@@ -579,7 +739,23 @@ ipcMain.handle('logo:computeHash', async (_event, imageBufferBase64: string) => 
   }
 })
 
-// Scan a document for logo matches
+/**
+ * Scans a document for images matching the configured logo.
+ *
+ * Process:
+ * 1. Parse document to extract embedded images
+ * 2. Compute perceptual hash for each image
+ * 3. Calculate similarity (Hamming distance) against logo hash
+ * 4. Return images exceeding similarity threshold
+ *
+ * Currently only supports DOCX files (images in word/media/).
+ *
+ * @param fileName - Document filename (for format detection)
+ * @param bufferBase64 - Document content as base64
+ * @param logoHash - Reference logo hash (from logo:computeHash)
+ * @param threshold - Minimum similarity percentage (0-100)
+ * @returns LogoScanResult with matched image IDs and similarity scores
+ */
 ipcMain.handle(
   'logo:scanDocument',
   async (

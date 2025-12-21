@@ -1,3 +1,22 @@
+/**
+ * @fileoverview Upload Step Component
+ *
+ * This is the first step in the document sanitization workflow.
+ * It provides two methods for input:
+ * 1. File upload (drag-and-drop or browse)
+ * 2. Direct text input (paste or type)
+ *
+ * Features:
+ * - Drag-and-drop file upload
+ * - Multiple format support (PDF, DOCX, XLSX, images, etc.)
+ * - Direct text input with "Sanitize Text" button
+ * - OCR for image files (via Tesseract.js)
+ * - Logo detection for DOCX files
+ * - Settings modals (detection config, logo upload)
+ *
+ * @module src/components/UploadStep
+ */
+
 import { useState, useCallback, useRef } from 'react'
 import { useDocumentStore } from '../stores/documentStore'
 import { useConfigStore } from '../stores/configStore'
@@ -7,10 +26,13 @@ import { LogoSettings } from './LogoSettings'
 import { ConfigModal } from './ConfigModal'
 import { Upload, User, Building2, DollarSign, Cpu, Key, CheckCircle, Settings, Image, Sliders } from './ui/icons'
 
+/** File extensions supported for upload */
 const SUPPORTED_EXTENSIONS = ['.pdf', '.docx', '.doc', '.xlsx', '.xls', '.csv', '.txt', '.md', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.tiff']
 
-// Map NER entity types to detection categories
-// Note: Organizations/companies are only detected via user configuration, not NER
+/**
+ * Maps NER entity types to UI detection categories.
+ * Note: Organization detection only via user config, not NER.
+ */
 const typeToCategory: Record<string, DetectionCategory> = {
   person: 'pii',
   email: 'pii',
@@ -24,7 +46,13 @@ const typeToCategory: Record<string, DetectionCategory> = {
   domain: 'technical'
 }
 
-// Generate placeholder based on type
+/**
+ * Generates a descriptive placeholder for masked content.
+ *
+ * @param type - Entity type (person, email, phone, etc.)
+ * @param index - Entity index (for unique numbering)
+ * @returns Placeholder string like "[PERSON_1]" or "[EMAIL_3]"
+ */
 function generatePlaceholder(type: string, index: number): string {
   const prefixes: Record<string, string> = {
     person: 'PERSON',
@@ -41,10 +69,18 @@ function generatePlaceholder(type: string, index: number): string {
   return `[${prefixes[type] || 'REDACTED'}_${index + 1}]`
 }
 
+/** Props for UploadStep component */
 interface UploadStepProps {
+  /** Callback when file/text is successfully processed */
   onFileUploaded: () => void
 }
 
+/**
+ * Upload Step - First step in the sanitization workflow.
+ *
+ * Handles file upload (drag-drop/browse) and text input.
+ * Triggers NER extraction and transitions to Review step.
+ */
 export function UploadStep({ onFileUploaded }: UploadStepProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -594,6 +630,10 @@ export function UploadStep({ onFileUploaded }: UploadStepProps) {
   )
 }
 
+/**
+ * Feature item for the info panel sidebar.
+ * Displays an icon, title, and description for each detection capability.
+ */
 function FeatureItem({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
     <div className="flex items-start gap-3">

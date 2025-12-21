@@ -1,27 +1,70 @@
+/**
+ * @fileoverview Configuration State Store (Persisted)
+ *
+ * This Zustand store manages user configuration with persistence:
+ * - Company information (name, aliases, domains)
+ * - Custom entities (keywords, names, clients, etc.)
+ * - Detection settings (confidence, categories)
+ * - Export preferences
+ * - Logo detection settings
+ *
+ * Data is persisted to electron-store via Zustand persist middleware.
+ * Survives app restarts.
+ *
+ * @module src/stores/configStore
+ */
+
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Config, DetectionCategory, LogoConfig } from '../types'
 
-// Input validation helpers
+// ============================================================================
+// VALIDATION CONSTANTS
+// ============================================================================
+
+/** Maximum length for string inputs */
 const MAX_STRING_LENGTH = 500
+/** Maximum number of items in arrays */
 const MAX_ARRAY_SIZE = 100
+/** Maximum length for individual keywords */
 const MAX_KEYWORD_LENGTH = 100
 
+// ============================================================================
+// VALIDATION HELPERS
+// ============================================================================
+
+/**
+ * Sanitizes string input by trimming and limiting length.
+ * @internal
+ */
 function sanitizeString(input: string, maxLength = MAX_STRING_LENGTH): string {
   if (typeof input !== 'string') return ''
   return input.trim().slice(0, maxLength)
 }
 
+/**
+ * Validates and clamps confidence value to 0-100 range.
+ * @internal
+ */
 function validateConfidence(value: number): number {
   if (typeof value !== 'number' || isNaN(value)) return 70
   return Math.min(100, Math.max(0, Math.round(value)))
 }
 
+/**
+ * Checks if value already exists in array (case-insensitive).
+ * @internal
+ */
 function isDuplicateEntry(arr: string[], value: string): boolean {
   const normalized = value.toLowerCase().trim()
   return arr.some(item => item.toLowerCase().trim() === normalized)
 }
 
+// ============================================================================
+// DEFAULT CONFIGURATION
+// ============================================================================
+
+/** Default configuration values */
 const defaultConfig: Config = {
   companyInfo: {
     primaryName: '',
@@ -54,31 +97,69 @@ const defaultConfig: Config = {
   }
 }
 
+// ============================================================================
+// CONFIG STATE INTERFACE
+// ============================================================================
+
+/**
+ * Configuration store state and actions.
+ */
 interface ConfigState {
+  /** Current configuration */
   config: Config
+  /** Replace entire configuration */
   setConfig: (config: Config) => void
+  /** Update company information fields */
   updateCompanyInfo: (info: Partial<Config['companyInfo']>) => void
+  /** Update detection settings */
   updateDetectionSettings: (settings: Partial<Config['detectionSettings']>) => void
+  /** Update export preferences */
   updateExportPreferences: (prefs: Partial<Config['exportPreferences']>) => void
+  /** Add a custom keyword to detect */
   addKeyword: (keyword: string) => void
+  /** Remove a custom keyword */
   removeKeyword: (keyword: string) => void
+  /** Add a company alias */
   addAlias: (alias: string) => void
+  /** Remove a company alias */
   removeAlias: (alias: string) => void
+  /** Add a custom person name to detect */
   addName: (name: string) => void
+  /** Remove a custom person name */
   removeName: (name: string) => void
+  /** Add an internal domain */
   addInternalDomain: (domain: string) => void
+  /** Remove an internal domain */
   removeInternalDomain: (domain: string) => void
+  /** Toggle a detection category on/off */
   toggleCategory: (category: DetectionCategory) => void
+  /** Update logo detection settings */
   setLogoConfig: (logoConfig: Partial<LogoConfig>) => void
+  /** Clear logo configuration */
   clearLogo: () => void
+  /** Reset to default configuration */
   resetConfig: () => void
 }
 
+/**
+ * Configuration store hook with persistence.
+ *
+ * Uses Zustand persist middleware to save state to electron-store.
+ * Storage key: 'maskr-config'
+ *
+ * Usage in React components:
+ * ```tsx
+ * const { config, addKeyword, updateDetectionSettings } = useConfigStore()
+ * ```
+ *
+ * All mutations validate and sanitize input before storing.
+ */
 export const useConfigStore = create<ConfigState>()(
   persist(
     (set) => ({
       config: defaultConfig,
 
+      // ----- Full Config Operations -----
       setConfig: (config) => set({ config }),
 
       updateCompanyInfo: (info) =>

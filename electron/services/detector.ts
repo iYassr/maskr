@@ -1,20 +1,88 @@
+/**
+ * @fileoverview Named Entity Recognition (NER) Service
+ *
+ * This module detects sensitive information in text using pattern matching
+ * and NLP (Natural Language Processing). All detection happens locally
+ * with no external API calls.
+ *
+ * Detection Categories:
+ * - PII: Person names, emails, phones, Saudi IDs
+ * - Financial: Currency amounts, credit cards (Luhn validated), IBANs (Mod97 validated)
+ * - Technical: IP addresses (v4/v6), URLs, domain names
+ *
+ * Confidence Levels:
+ * - 100%: User-defined custom names
+ * - 95%: Algorithm-validated (credit cards, IBANs, emails)
+ * - 90%: Pattern-matched with context (Saudi IDs, domains)
+ * - 85%: NLP-detected (person names, phone numbers)
+ *
+ * @module electron/services/detector
+ */
+
 import nlp from 'compromise'
 
+/**
+ * Represents a detected entity in text.
+ */
 export interface NEREntity {
+  /** The detected text content */
   text: string
+  /** Entity type classification */
   type: 'person' | 'financial' | 'credit_card' | 'iban' | 'phone' | 'email' | 'ip' | 'url' | 'domain' | 'saudi_id'
+  /** Start position in source text (0-indexed) */
   start: number
+  /** End position in source text (exclusive) */
   end: number
+  /** Detection confidence (0-100) */
   confidence?: number
 }
 
-// Custom names that users can add - these are always detected
+/**
+ * Set of user-defined custom names to detect.
+ * These are always matched with 100% confidence.
+ * @internal
+ */
 let customNames: Set<string> = new Set()
 
+/**
+ * Sets the custom names list for detection.
+ * Names are normalized to lowercase and trimmed.
+ *
+ * @param names - Array of names to detect with 100% confidence
+ *
+ * @example
+ * setCustomNames(['John Doe', 'Jane Smith'])
+ */
 export function setCustomNames(names: string[]): void {
   customNames = new Set(names.map(n => n.toLowerCase().trim()).filter(Boolean))
 }
 
+/**
+ * Main entity extraction function.
+ *
+ * Processes text through multiple detection patterns in this order:
+ * 1. Custom names (user-defined)
+ * 2. Full names (NLP)
+ * 3. Financial amounts (currency symbols)
+ * 4. Credit cards (Luhn validation)
+ * 5. IBANs (Mod97 validation)
+ * 6. IP addresses (before phones to avoid false matches)
+ * 7. Phone numbers
+ * 8. Email addresses
+ * 9. URLs
+ * 10. Domain names (after URLs/emails to avoid duplicates)
+ * 11. Saudi IDs
+ *
+ * Duplicate entities at the same position are automatically filtered.
+ *
+ * @param text - Text content to analyze
+ * @param userCustomNames - Optional custom names to detect
+ * @returns Array of detected entities sorted by position
+ *
+ * @example
+ * const entities = extractEntities('Contact John Doe at john@example.com')
+ * // Returns: [{ text: 'John Doe', type: 'person', ... }, { text: 'john@example.com', type: 'email', ... }]
+ */
 export function extractEntities(text: string, userCustomNames?: string[]): NEREntity[] {
   // Guard against invalid input
   if (!text || typeof text !== 'string') {
@@ -90,7 +158,17 @@ export function extractEntities(text: string, userCustomNames?: string[]): NEREn
   return uniqueEntities.sort((a, b) => a.start - b.start)
 }
 
-// Detect financial amounts ONLY when they have explicit currency symbols
+/**
+ * Detects monetary amounts with explicit currency symbols.
+ *
+ * Only matches amounts with clear currency indicators to avoid false positives.
+ * Supports: $, €, £, ¥, ₹, SAR, AED, USD, EUR, GBP, CHF, JPY, INR
+ * Also matches word-based currencies: dollars, euros, pounds, riyals, etc.
+ *
+ * @param text - Text to search
+ * @param addEntity - Callback to add detected entity
+ * @internal
+ */
 function detectFinancialAmounts(
   text: string,
   addEntity: (entity: NEREntity) => void
@@ -136,7 +214,19 @@ function detectFinancialAmounts(
   }
 }
 
-// Luhn algorithm to validate credit card numbers
+/**
+ * Validates credit card numbers using the Luhn algorithm (Mod 10).
+ *
+ * The Luhn algorithm is a checksum formula used by all major credit cards.
+ * It can detect single-digit errors and most transpositions.
+ *
+ * @param cardNumber - Card number string (may contain non-digit characters)
+ * @returns true if the number passes Luhn validation
+ *
+ * @example
+ * isValidLuhn('4111111111111111') // true (valid Visa test number)
+ * isValidLuhn('4111111111111112') // false (checksum fails)
+ */
 function isValidLuhn(cardNumber: string): boolean {
   const digits = cardNumber.replace(/\D/g, '')
   if (digits.length < 13 || digits.length > 19) return false
@@ -159,7 +249,24 @@ function isValidLuhn(cardNumber: string): boolean {
   return sum % 10 === 0
 }
 
-// Detect credit card numbers with Luhn validation
+/**
+ * Detects credit card numbers with Luhn validation and prefix verification.
+ *
+ * Validates:
+ * - Length: 13-19 digits
+ * - Luhn checksum
+ * - Card network prefix (Visa, Mastercard, Amex, Discover)
+ *
+ * Supported formats:
+ * - Continuous: 4111111111111111
+ * - With spaces: 4111 1111 1111 1111
+ * - With dashes: 4111-1111-1111-1111
+ * - Amex format: 3782 822463 10005
+ *
+ * @param text - Text to search
+ * @param addEntity - Callback to add detected entity
+ * @internal
+ */
 function detectCreditCards(
   text: string,
   addEntity: (entity: NEREntity) => void
@@ -212,7 +319,21 @@ function detectCreditCards(
   }
 }
 
-// Validate IBAN structure
+/**
+ * Validates IBAN (International Bank Account Number) structure.
+ *
+ * Validation steps:
+ * 1. Length check (15-34 characters)
+ * 2. Format: 2 letters + 2 digits + alphanumeric BBAN
+ * 3. Mod97 checksum validation (ISO 7064)
+ *
+ * @param iban - IBAN string (spaces allowed)
+ * @returns true if IBAN structure is valid
+ *
+ * @example
+ * isValidIBAN('SA0380000000608010167519') // true
+ * isValidIBAN('GB82WEST12345698765432')   // true
+ */
 function isValidIBAN(iban: string): boolean {
   const cleanIBAN = iban.replace(/\s/g, '').toUpperCase()
 
@@ -237,7 +358,12 @@ function isValidIBAN(iban: string): boolean {
   return remainder === 1
 }
 
-// Detect IBAN numbers with validation
+/**
+ * Detects IBAN numbers with Mod97 validation.
+ * @param text - Text to search
+ * @param addEntity - Callback to add detected entity
+ * @internal
+ */
 function detectIBANs(
   text: string,
   addEntity: (entity: NEREntity) => void
@@ -271,7 +397,25 @@ function detectIBANs(
   }
 }
 
-// Detect phone numbers in various formats
+/**
+ * Detects phone numbers in various international formats.
+ *
+ * Supported formats:
+ * - International: +1 234 567 8900, +44 20 7946 0958
+ * - Saudi Arabia: +966 5x xxx xxxx, 05xxxxxxxx
+ * - UAE: +971 5x xxx xxxx
+ * - US/Canada: (123) 456-7890, 123-456-7890
+ * - UK: 020 7946 0958, 07xxx xxxxxx
+ * - Germany, France, and other formats
+ * - Toll-free: 1-800-xxx-xxxx
+ * - With extensions: xxx-xxx-xxxx ext 1234
+ *
+ * Validation: 7-15 digits (international standard)
+ *
+ * @param text - Text to search
+ * @param addEntity - Callback to add detected entity
+ * @internal
+ */
 function detectPhoneNumbers(
   text: string,
   addEntity: (entity: NEREntity) => void
@@ -337,7 +481,19 @@ function detectPhoneNumbers(
   }
 }
 
-// Detect email addresses
+/**
+ * Detects email addresses with RFC-compliant validation.
+ *
+ * Validates:
+ * - Local part length (1-64 characters)
+ * - Domain length (1-253 characters)
+ * - No leading/trailing dots
+ * - Domain contains at least one dot
+ *
+ * @param text - Text to search
+ * @param addEntity - Callback to add detected entity
+ * @internal
+ */
 function detectEmails(
   text: string,
   addEntity: (entity: NEREntity) => void
@@ -375,7 +531,16 @@ function detectEmails(
   }
 }
 
-// Detect ONLY custom user-defined names
+/**
+ * Detects user-defined custom names with 100% confidence.
+ *
+ * Uses word boundary matching for precise detection.
+ * Names are matched case-insensitively.
+ *
+ * @param text - Text to search
+ * @param addEntity - Callback to add detected entity
+ * @internal
+ */
 function detectCustomNames(
   text: string,
   addEntity: (entity: NEREntity) => void
@@ -400,8 +565,22 @@ function detectCustomNames(
   }
 }
 
-// Detect full names using NLP (compromise library)
-// Only detects names with at least 2 parts (first + last name)
+/**
+ * Detects full person names using NLP (compromise library).
+ *
+ * Filters:
+ * - Requires at least 2 name parts (first + last)
+ * - Minimum 4 characters
+ * - Excludes possessives ('s)
+ * - Excludes false positives (Company, Provider, Customer, etc.)
+ *
+ * Note: Uses text.indexOf() which may match wrong instance if name appears
+ * multiple times. This is a known limitation.
+ *
+ * @param text - Text to search
+ * @param addEntity - Callback to add detected entity
+ * @internal
+ */
 function detectFullNames(
   text: string,
   addEntity: (entity: NEREntity) => void
@@ -454,7 +633,18 @@ function detectFullNames(
   })
 }
 
-// Detect IP addresses (IPv4 and IPv6)
+/**
+ * Detects IP addresses (IPv4 and IPv6).
+ *
+ * IPv4: Standard dotted decimal (e.g., 192.168.1.1)
+ * IPv6: Full and compressed formats (e.g., 2001:db8::1)
+ *
+ * Filters version-like numbers (e.g., 1.0.0.0) to reduce false positives.
+ *
+ * @param text - Text to search
+ * @param addEntity - Callback to add detected entity
+ * @internal
+ */
 function detectIPAddresses(
   text: string,
   addEntity: (entity: NEREntity) => void
@@ -491,7 +681,16 @@ function detectIPAddresses(
   }
 }
 
-// Detect URLs (http, https, ftp, etc.)
+/**
+ * Detects URLs with protocol prefixes.
+ *
+ * Supported protocols: http, https, ftp
+ * Automatically strips trailing punctuation that's likely not part of URL.
+ *
+ * @param text - Text to search
+ * @param addEntity - Callback to add detected entity
+ * @internal
+ */
 function detectURLs(
   text: string,
   addEntity: (entity: NEREntity) => void
@@ -516,7 +715,18 @@ function detectURLs(
   }
 }
 
-// Detect standalone domain names (not part of URLs or emails)
+/**
+ * Detects standalone domain names (not part of URLs or emails).
+ *
+ * Matches domains with common TLDs (.com, .org, .io, country codes, etc.)
+ * Excludes domains that are part of:
+ * - Email addresses (preceded by @)
+ * - URLs (preceded by ://)
+ *
+ * @param text - Text to search
+ * @param addEntity - Callback to add detected entity
+ * @internal
+ */
 function detectDomains(
   text: string,
   addEntity: (entity: NEREntity) => void
@@ -551,7 +761,21 @@ function detectDomains(
   }
 }
 
-// Detect Saudi ID numbers (National ID and Iqama)
+/**
+ * Detects Saudi ID numbers (National ID and Iqama).
+ *
+ * Format:
+ * - National ID (citizens): 10 digits starting with 1
+ * - Iqama (residents): 10 digits starting with 2
+ *
+ * Filters:
+ * - Excludes numbers preceded by + (likely phone numbers)
+ * - Excludes numbers followed by more digits
+ *
+ * @param text - Text to search
+ * @param addEntity - Callback to add detected entity
+ * @internal
+ */
 function detectSaudiIDs(
   text: string,
   addEntity: (entity: NEREntity) => void
@@ -585,7 +809,20 @@ function detectSaudiIDs(
   }
 }
 
-// Additional NER-based detection for specific entity types
+/**
+ * Detects person names from text (returns only custom names).
+ *
+ * This is a simplified version of entity extraction that only returns
+ * custom user-defined names. Used for targeted name detection.
+ *
+ * @param text - Text to search
+ * @returns Array of detected names with positions
+ *
+ * @example
+ * setCustomNames(['John Doe'])
+ * const names = detectPersonNames('Contact John Doe for details')
+ * // Returns: [{ text: 'John Doe', start: 8, end: 16 }]
+ */
 export function detectPersonNames(text: string): Array<{ text: string; start: number; end: number }> {
   // Only return custom names now
   const results: Array<{ text: string; start: number; end: number }> = []

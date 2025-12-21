@@ -1,31 +1,54 @@
 /**
- * Security utilities for input validation and path safety
+ * @fileoverview Security Utilities
+ *
+ * This module provides input validation and path safety functions
+ * to protect against common security vulnerabilities:
+ *
+ * - Path traversal attacks (../)
+ * - Access to system directories
+ * - Buffer overflow via large files
+ * - Malicious file extensions
+ * - Profile ID injection
+ *
+ * All IPC handlers should validate inputs using these utilities
+ * before processing user-provided data.
+ *
+ * @module electron/services/security
  */
 
 import path from 'path'
 import { app } from 'electron'
 
-// Allowed file extensions for document processing
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+/** Allowed document file extensions */
 const ALLOWED_DOCUMENT_EXTENSIONS = new Set([
   'txt', 'md', 'docx', 'xlsx', 'pdf', 'csv', 'json', 'html'
 ])
 
+/** Allowed image file extensions (for OCR) */
 const ALLOWED_IMAGE_EXTENSIONS = new Set([
   'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'tiff'
 ])
 
+/** Combined set of all allowed extensions */
 const ALL_ALLOWED_EXTENSIONS = new Set([
   ...ALLOWED_DOCUMENT_EXTENSIONS,
   ...ALLOWED_IMAGE_EXTENSIONS
 ])
 
-// Maximum file size (50MB)
+/** Maximum file size: 50MB */
 const MAX_FILE_SIZE = 50 * 1024 * 1024
 
-// Maximum text input length (10MB of text)
+/** Maximum text input length: 10MB */
 const MAX_TEXT_LENGTH = 10 * 1024 * 1024
 
-// Directories that should never be accessed
+/**
+ * System directories that should never be accessed.
+ * Includes both Unix and Windows paths.
+ */
 const FORBIDDEN_PATHS = [
   '/etc',
   '/System',
@@ -40,14 +63,45 @@ const FORBIDDEN_PATHS = [
   'C:\\ProgramData'
 ]
 
+// ============================================================================
+// VALIDATION RESULT TYPE
+// ============================================================================
+
 /**
- * Validates that a file path is safe to access
- * - Must be absolute
- * - Must not contain path traversal
- * - Must have allowed extension
- * - Must not be in forbidden directories
+ * Result of a validation check.
  */
-export function validateFilePath(filePath: string): { valid: boolean; error?: string } {
+interface ValidationResult {
+  /** Whether the input passed validation */
+  valid: boolean
+  /** Error message if validation failed */
+  error?: string
+}
+
+// ============================================================================
+// FILE PATH VALIDATION
+// ============================================================================
+
+/**
+ * Validates that a file path is safe to access.
+ *
+ * Security checks:
+ * 1. Path must be provided and be a string
+ * 2. No path traversal attempts (..)
+ * 3. Path must be absolute
+ * 4. File extension must be in allowed list
+ * 5. Path must not be in forbidden system directories
+ *
+ * @param filePath - The file path to validate
+ * @returns ValidationResult indicating if path is safe
+ *
+ * @example
+ * validateFilePath('/Users/john/Documents/file.pdf')
+ * // Returns: { valid: true }
+ *
+ * validateFilePath('../../../etc/passwd')
+ * // Returns: { valid: false, error: 'Path traversal detected' }
+ */
+export function validateFilePath(filePath: string): ValidationResult {
   // Check if path is provided
   if (!filePath || typeof filePath !== 'string') {
     return { valid: false, error: 'File path is required' }
@@ -87,10 +141,19 @@ export function validateFilePath(filePath: string): { valid: boolean; error?: st
 }
 
 /**
- * Validates just the file extension (for cases where buffer is already provided)
- * Used when we only need to check format, not access the file
+ * Validates file extension only (when buffer is already provided).
+ *
+ * Used for IPC handlers that receive file content directly,
+ * where we only need to verify the format is allowed.
+ *
+ * @param fileName - Filename to check extension
+ * @returns ValidationResult indicating if extension is allowed
+ *
+ * @example
+ * validateFileExtension('document.pdf')  // { valid: true }
+ * validateFileExtension('script.exe')    // { valid: false, error: '...' }
  */
-export function validateFileExtension(fileName: string): { valid: boolean; error?: string } {
+export function validateFileExtension(fileName: string): ValidationResult {
   if (!fileName || typeof fileName !== 'string') {
     return { valid: false, error: 'File name is required' }
   }
@@ -113,10 +176,22 @@ export function validateFileExtension(fileName: string): { valid: boolean; error
 }
 
 /**
- * Validates file path specifically for drag-and-drop operations
- * Additional check: ensure it's within user-accessible directories
+ * Validates file path for drag-and-drop operations.
+ *
+ * In addition to standard path validation, ensures the file
+ * is within user-accessible directories:
+ * - Home directory
+ * - Temp directory
+ * - Downloads
+ * - Documents
+ * - Desktop
+ *
+ * This prevents drag-and-drop from system locations.
+ *
+ * @param filePath - The file path to validate
+ * @returns ValidationResult indicating if path is safe for drag-and-drop
  */
-export function validateDragDropPath(filePath: string): { valid: boolean; error?: string } {
+export function validateDragDropPath(filePath: string): ValidationResult {
   const baseValidation = validateFilePath(filePath)
   if (!baseValidation.valid) {
     return baseValidation
@@ -142,10 +217,20 @@ export function validateDragDropPath(filePath: string): { valid: boolean; error?
   return { valid: true }
 }
 
+// ============================================================================
+// DATA SIZE VALIDATION
+// ============================================================================
+
 /**
- * Validates buffer size
+ * Validates that a base64-encoded buffer doesn't exceed size limit.
+ *
+ * Estimates actual binary size (base64 is ~33% larger than binary).
+ * Maximum allowed size: 50MB
+ *
+ * @param base64Data - Base64-encoded data string
+ * @returns ValidationResult indicating if size is acceptable
  */
-export function validateBufferSize(base64Data: string): { valid: boolean; error?: string } {
+export function validateBufferSize(base64Data: string): ValidationResult {
   if (!base64Data || typeof base64Data !== 'string') {
     return { valid: false, error: 'Buffer data is required' }
   }
@@ -164,9 +249,14 @@ export function validateBufferSize(base64Data: string): { valid: boolean; error?
 }
 
 /**
- * Validates text input length
+ * Validates that text input doesn't exceed size limit.
+ *
+ * Maximum allowed length: 10MB of text (~10 million characters)
+ *
+ * @param text - Text content to validate
+ * @returns ValidationResult indicating if text length is acceptable
  */
-export function validateTextInput(text: string): { valid: boolean; error?: string } {
+export function validateTextInput(text: string): ValidationResult {
   if (typeof text !== 'string') {
     return { valid: false, error: 'Text must be a string' }
   }
@@ -181,10 +271,23 @@ export function validateTextInput(text: string): { valid: boolean; error?: strin
   return { valid: true }
 }
 
+// ============================================================================
+// PROFILE VALIDATION
+// ============================================================================
+
 /**
- * Validates profile ID (alphanumeric + dashes only)
+ * Validates a profile ID for safe storage.
+ *
+ * Allowed characters: a-z, A-Z, 0-9, hyphen (-)
+ * Maximum length: 100 characters
+ *
+ * This prevents injection attacks when profile IDs are used
+ * as storage keys or file names.
+ *
+ * @param id - Profile ID to validate
+ * @returns ValidationResult indicating if ID is safe
  */
-export function validateProfileId(id: string): { valid: boolean; error?: string } {
+export function validateProfileId(id: string): ValidationResult {
   if (!id || typeof id !== 'string') {
     return { valid: false, error: 'Profile ID is required' }
   }
@@ -200,10 +303,20 @@ export function validateProfileId(id: string): { valid: boolean; error?: string 
   return { valid: true }
 }
 
+// ============================================================================
+// NUMERIC VALIDATION
+// ============================================================================
+
 /**
- * Validates threshold value (0-100)
+ * Validates that a threshold value is within acceptable range.
+ *
+ * Used for logo detection similarity threshold.
+ * Must be a number between 0 and 100 (inclusive).
+ *
+ * @param threshold - Threshold value to validate
+ * @returns ValidationResult indicating if threshold is valid
  */
-export function validateThreshold(threshold: number): { valid: boolean; error?: string } {
+export function validateThreshold(threshold: number): ValidationResult {
   if (typeof threshold !== 'number' || isNaN(threshold)) {
     return { valid: false, error: 'Threshold must be a number' }
   }
@@ -215,8 +328,26 @@ export function validateThreshold(threshold: number): { valid: boolean; error?: 
   return { valid: true }
 }
 
+// ============================================================================
+// FILENAME SANITIZATION
+// ============================================================================
+
 /**
- * Sanitizes filename for export (removes dangerous characters)
+ * Sanitizes a filename for safe export.
+ *
+ * Removes characters that could cause issues:
+ * - Path separators (/ and \)
+ * - Windows reserved characters (:*?"<>|)
+ * - Null bytes
+ *
+ * Also truncates to 255 characters (filesystem limit).
+ *
+ * @param filename - Filename to sanitize
+ * @returns Sanitized filename safe for saving
+ *
+ * @example
+ * sanitizeFilename('report<2023>.pdf')  // 'report_2023_.pdf'
+ * sanitizeFilename('../../../etc/passwd')  // '______etc_passwd'
  */
 export function sanitizeFilename(filename: string): string {
   if (!filename || typeof filename !== 'string') {
