@@ -19,7 +19,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey" alt="Platform">
-  <img src="https://img.shields.io/badge/node-%3E%3D20.19.0-green" alt="Node Version">
+  <img src="https://img.shields.io/badge/node-%3E%3D24-green" alt="Node Version">
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="License">
   <img src="https://img.shields.io/badge/electron-39-9feaf9" alt="Electron">
   <img src="https://img.shields.io/badge/react-19-61dafb" alt="React">
@@ -102,7 +102,7 @@ Preview the sanitized document with all sensitive data replaced by placeholders.
 
 ### Prerequisites
 
-- **Node.js** 20.19+ or 22.12+ (required by Vite 7)
+- **Node.js** 24+ (LTS recommended)
 - **npm** (comes with Node.js)
 
 ### Quick Start
