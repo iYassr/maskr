@@ -21,7 +21,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "npm run build:vite && npx playwright test",
-    "test:headed": "npm run build:vite && npx playwright test --headed"
+    "test:headed": "npm run build:vite && npx playwright test --headed",
+    "verify-package": "node scripts/verify-package.mjs"
   },
   "keywords": [
     "electron",
