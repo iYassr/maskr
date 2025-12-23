@@ -18,25 +18,7 @@ import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 import { fileURLToPath } from 'url'
 import path from 'path'
 import fs from 'fs/promises'
-import {
-  parseDocument,
-  createMaskedDocx,
-  createMaskedXlsx,
-  createMaskedPdf
-} from './services/document-parser.js'
-import { extractEntities, detectPersonNames } from './services/detector.js'
-import {
-  extractTextFromImage,
-  extractTextFromImages,
-  combineOCRResults,
-  isValidImage
-} from './services/ocr.js'
-import {
-  computePerceptualHash,
-  calculateSimilarity,
-  createThumbnail,
-  isSharpAvailable
-} from './services/image-hash.js'
+// Light imports only - heavy modules are lazy-loaded
 import { createApplicationMenu } from './menu.js'
 import {
   getAllProfiles,
@@ -57,6 +39,46 @@ import {
   validateProfileId,
   validateThreshold
 } from './services/security.js'
+
+// ============================================================================
+// LAZY-LOADED MODULES
+// ============================================================================
+// Heavy modules are imported on-demand to speed up app startup.
+// Each module is cached after first import.
+// ============================================================================
+
+let documentParserModule: typeof import('./services/document-parser.js') | null = null
+let detectorModule: typeof import('./services/detector.js') | null = null
+let ocrModule: typeof import('./services/ocr.js') | null = null
+let imageHashModule: typeof import('./services/image-hash.js') | null = null
+
+async function getDocumentParser() {
+  if (!documentParserModule) {
+    documentParserModule = await import('./services/document-parser.js')
+  }
+  return documentParserModule
+}
+
+async function getDetector() {
+  if (!detectorModule) {
+    detectorModule = await import('./services/detector.js')
+  }
+  return detectorModule
+}
+
+async function getOCR() {
+  if (!ocrModule) {
+    ocrModule = await import('./services/ocr.js')
+  }
+  return ocrModule
+}
+
+async function getImageHash() {
+  if (!imageHashModule) {
+    imageHashModule = await import('./services/image-hash.js')
+  }
+  return imageHashModule
+}
 
 /** Current directory path (ESM equivalent of __dirname) */
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -320,6 +342,7 @@ ipcMain.handle('document:parse', async (_event, fileName: string, bufferBase64: 
     }
 
     const buffer = Buffer.from(bufferBase64, 'base64')
+    const { parseDocument } = await getDocumentParser()
     const parsed = await parseDocument(fileName, buffer)
 
     return {
@@ -384,6 +407,7 @@ ipcMain.handle('ner:extract', async (_event, text: string, customNames?: string[
       }
     }
 
+    const { extractEntities, detectPersonNames } = await getDetector()
     const entities = extractEntities(text, customNames)
     const persons = detectPersonNames(text)
 
@@ -440,6 +464,7 @@ ipcMain.handle(
 
       const originalBuffer = Buffer.from(originalBufferBase64, 'base64')
       let resultBuffer: Buffer
+      const { createMaskedDocx, createMaskedXlsx, createMaskedPdf } = await getDocumentParser()
 
       switch (format) {
         case 'docx':
@@ -506,6 +531,7 @@ ipcMain.handle('ocr:extractText', async (_event, imageBufferBase64: string, lang
     }
 
     const imageBuffer = Buffer.from(imageBufferBase64, 'base64')
+    const { isValidImage, extractTextFromImage } = await getOCR()
 
     // Validate image
     const valid = await isValidImage(imageBuffer)
@@ -571,6 +597,7 @@ ipcMain.handle(
       }
 
       const imageBuffers = imageBuffersBase64.map((b) => Buffer.from(b, 'base64'))
+      const { extractTextFromImages, combineOCRResults } = await getOCR()
       const results = await extractTextFromImages(imageBuffers, language || 'eng')
       const combinedText = combineOCRResults(results)
 
@@ -670,7 +697,8 @@ ipcMain.handle('profiles:create', (_event, name: string, config: ConfigProfile['
  * Sharp is an optional dependency - logo detection gracefully degrades if missing.
  * @returns true if Sharp is available, false otherwise
  */
-ipcMain.handle('logo:isAvailable', () => {
+ipcMain.handle('logo:isAvailable', async () => {
+  const { isSharpAvailable } = await getImageHash()
   return isSharpAvailable()
 })
 
@@ -695,6 +723,8 @@ ipcMain.handle('logo:computeHash', async (_event, imageBufferBase64: string) => 
     if (!bufferValidation.valid) {
       return { success: false, error: bufferValidation.error }
     }
+
+    const { isSharpAvailable, computePerceptualHash, createThumbnail } = await getImageHash()
 
     if (!isSharpAvailable()) {
       return {
@@ -789,6 +819,8 @@ ipcMain.handle(
         return { success: false, error: thresholdValidation.error }
       }
 
+      const { isSharpAvailable, computePerceptualHash, calculateSimilarity } = await getImageHash()
+
       if (!isSharpAvailable()) {
         return {
           success: false,
@@ -797,6 +829,7 @@ ipcMain.handle(
       }
 
       const buffer = Buffer.from(bufferBase64, 'base64')
+      const { parseDocument } = await getDocumentParser()
       const parsed = await parseDocument(fileName, buffer)
 
       if (!parsed.images || parsed.images.length === 0) {
