@@ -19,7 +19,15 @@
  * @module electron/services/detector
  */
 
-import nlp from 'compromise'
+// Lazy-loaded NLP module cache
+let nlpModule: typeof import('compromise') | null = null
+
+async function getNLP() {
+  if (!nlpModule) {
+    nlpModule = await import('compromise')
+  }
+  return nlpModule.default
+}
 
 /**
  * Represents a detected entity in text.
@@ -83,7 +91,7 @@ export function setCustomNames(names: string[]): void {
  * const entities = extractEntities('Contact John Doe at john@example.com')
  * // Returns: [{ text: 'John Doe', type: 'person', ... }, { text: 'john@example.com', type: 'email', ... }]
  */
-export function extractEntities(text: string, userCustomNames?: string[]): NEREntity[] {
+export async function extractEntities(text: string, userCustomNames?: string[]): Promise<NEREntity[]> {
   // Guard against invalid input
   if (!text || typeof text !== 'string') {
     return []
@@ -117,7 +125,7 @@ export function extractEntities(text: string, userCustomNames?: string[]): NEREn
   detectCustomNames(text, addEntity)
 
   // 2. Detect full names using NLP (first + last name, at least 2 parts)
-  detectFullNames(text, addEntity)
+  await detectFullNames(text, addEntity)
 
   // 3. Extract financial amounts - ONLY with explicit currency symbols
   detectFinancialAmounts(text, addEntity)
@@ -584,10 +592,11 @@ function detectCustomNames(
  * @param addEntity - Callback to add detected entity
  * @internal
  */
-function detectFullNames(
+async function detectFullNames(
   text: string,
   addEntity: (entity: NEREntity) => void
-): void {
+): Promise<void> {
+  const nlp = await getNLP()
   const doc = nlp(text)
   const people = doc.people()
 

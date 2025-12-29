@@ -408,7 +408,7 @@ ipcMain.handle('ner:extract', async (_event, text: string, customNames?: string[
     }
 
     const { extractEntities, detectPersonNames } = await getDetector()
-    const entities = extractEntities(text, customNames)
+    const entities = await extractEntities(text, customNames)
     const persons = detectPersonNames(text)
 
     return {
