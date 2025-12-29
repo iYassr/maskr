@@ -266,15 +266,22 @@ async function parsePdf(buffer: Buffer): Promise<ParsedDocument> {
   try {
     const pdfjsLib = await import('pdfjs-dist')
 
+    // Disable worker for Electron/Node.js compatibility
+    // Workers don't work properly in packaged Electron apps
+    if (typeof pdfjsLib.GlobalWorkerOptions !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = ''
+    }
+
     // Convert Buffer to Uint8Array for pdfjs
     const uint8Array = new Uint8Array(buffer)
 
-    // Load the PDF document
+    // Load the PDF document with worker disabled
     const loadingTask = pdfjsLib.getDocument({
       data: uint8Array,
       useSystemFonts: true,
-      // Disable worker for Electron compatibility
       disableFontFace: true,
+      isEvalSupported: false,
+      useWorkerFetch: false,
     })
 
     const pdfDoc = await loadingTask.promise

@@ -62,7 +62,14 @@ async function getDocumentParser() {
 
 async function getDetector() {
   if (!detectorModule) {
-    detectorModule = await import('./services/detector.js')
+    try {
+      logInfo('Importing detector module from ./services/detector.js')
+      detectorModule = await import('./services/detector.js')
+      logInfo('Detector module imported successfully')
+    } catch (err) {
+      logError('Failed to import detector module', err)
+      throw err
+    }
   }
   return detectorModule
 }
