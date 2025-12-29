@@ -1,12 +1,10 @@
-import { useState, useCallback, lazy, Suspense } from 'react'
+import { useState, useCallback } from 'react'
 import { useDocumentStore } from './stores/documentStore'
 import { UploadStep } from './components/UploadStep'
+import { ReviewStep } from './components/ReviewStep'
+import { ExportStep } from './components/ExportStep'
 import { Check } from './components/ui/icons'
 import { ThemeToggle } from './components/ui/theme-toggle'
-
-// Lazy-load heavy step components
-const ReviewStep = lazy(() => import('./components/ReviewStep').then(m => ({ default: m.ReviewStep })))
-const ExportStep = lazy(() => import('./components/ExportStep').then(m => ({ default: m.ExportStep })))
 
 type Step = 'upload' | 'review' | 'export'
 
@@ -111,20 +109,18 @@ export default function App() {
         {currentStep === 'upload' && (
           <UploadStep onFileUploaded={handleFileUploaded} />
         )}
-        <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="animate-pulse text-muted-foreground">Loading...</div></div>}>
-          {currentStep === 'review' && (
-            <ReviewStep
-              onContinue={handleReviewComplete}
-              onBack={handleBackToUpload}
-            />
-          )}
-          {currentStep === 'export' && (
-            <ExportStep
-              onBack={handleBackToReview}
-              onReset={handleReset}
-            />
-          )}
-        </Suspense>
+        {currentStep === 'review' && (
+          <ReviewStep
+            onContinue={handleReviewComplete}
+            onBack={handleBackToUpload}
+          />
+        )}
+        {currentStep === 'export' && (
+          <ExportStep
+            onBack={handleBackToReview}
+            onReset={handleReset}
+          />
+        )}
       </main>
 
       {/* Footer */}
