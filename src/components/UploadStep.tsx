@@ -329,8 +329,13 @@ export function UploadStep({ onFileUploaded }: UploadStepProps) {
       // Use native Electron file dialog
       const fileData = await window.api.openFile()
       if (fileData && fileData.filePath) {
-        // Convert the file data to a File-like object for processFile
-        const blob = await fetch(`data:application/octet-stream;base64,${fileData.buffer}`).then(r => r.blob())
+        // Convert base64 to Blob without using fetch (CSP-safe)
+        const binaryString = atob(fileData.buffer)
+        const bytes = new Uint8Array(binaryString.length)
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i)
+        }
+        const blob = new Blob([bytes], { type: 'application/octet-stream' })
         const file = new File([blob], fileData.fileName, { type: 'application/octet-stream' })
         processFile(file)
       }
