@@ -1,6 +1,6 @@
 {
   "name": "maskr",
-  "version": "1.3.8",
+  "version": "1.3.9",
   "description": "A privacy-focused desktop app for detecting and masking sensitive information in documents before sharing with AI or other parties",
   "main": "dist-electron/main.js",
   "type": "module",
