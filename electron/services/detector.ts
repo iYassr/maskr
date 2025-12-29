@@ -24,7 +24,14 @@ let nlpModule: typeof import('compromise') | null = null
 
 async function getNLP() {
   if (!nlpModule) {
-    nlpModule = await import('compromise')
+    console.log('[detector] Loading compromise NLP module...')
+    try {
+      nlpModule = await import('compromise')
+      console.log('[detector] Compromise loaded successfully')
+    } catch (err) {
+      console.error('[detector] Failed to load compromise:', err)
+      throw err
+    }
   }
   return nlpModule.default
 }

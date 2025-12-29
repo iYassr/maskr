@@ -387,9 +387,12 @@ ipcMain.handle('document:parse', async (_event, fileName: string, bufferBase64: 
  */
 ipcMain.handle('ner:extract', async (_event, text: string, customNames?: string[]) => {
   try {
+    logInfo('NER extraction started', { textLength: text?.length })
+
     // Validate text input
     const textValidation = validateTextInput(text)
     if (!textValidation.valid) {
+      logWarn('NER validation failed', { error: textValidation.error })
       return {
         success: false,
         error: textValidation.error
@@ -411,8 +414,11 @@ ipcMain.handle('ner:extract', async (_event, text: string, customNames?: string[
       }
     }
 
+    logInfo('Loading detector module...')
     const { extractEntities, detectPersonNames } = await getDetector()
+    logInfo('Detector loaded, extracting entities...')
     const entities = await extractEntities(text, customNames)
+    logInfo('Entities extracted', { count: entities?.length })
     const persons = detectPersonNames(text)
 
     return {
