@@ -362,21 +362,25 @@ async function parsePdf(buffer: Buffer): Promise<ParsedDocument> {
     const pdfjsLib = await import('pdfjs-dist')
     logInfo('pdfjs-dist loaded successfully')
 
-    // Disable worker for Electron/Node.js compatibility
-    // Workers don't work properly in packaged Electron apps
-    // Setting workerSrc to empty string and using disableWorker option
-    if (typeof pdfjsLib.GlobalWorkerOptions !== 'undefined') {
-      // Point to a fake/empty worker to satisfy the check
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'data:,'
-      logDebug('PDF workerSrc set to empty data URI')
-    }
+    // Set the worker source to the actual worker file
+    // Use createRequire to get the path to the worker in node_modules
+    const { createRequire } = await import('module')
+    const require = createRequire(import.meta.url)
+    const workerPath = require.resolve('pdfjs-dist/build/pdf.worker.mjs')
+    logDebug('Worker path resolved', { workerPath })
+
+    // Convert to file URL for ESM compatibility
+    const { pathToFileURL } = await import('url')
+    const workerUrl = pathToFileURL(workerPath).href
+    pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl
+    logDebug('PDF worker configured', { workerUrl })
 
     // Convert Buffer to Uint8Array for pdfjs
     const uint8Array = new Uint8Array(buffer)
     logDebug('Buffer converted to Uint8Array', { length: uint8Array.length })
 
-    // Load the PDF document with worker explicitly disabled
-    logDebug('Loading PDF document with pdfjs (worker disabled)')
+    // Load the PDF document
+    logDebug('Loading PDF document with pdfjs')
     let loadingTask
     try {
       loadingTask = pdfjsLib.getDocument({
@@ -384,9 +388,6 @@ async function parsePdf(buffer: Buffer): Promise<ParsedDocument> {
         useSystemFonts: true,
         disableFontFace: true,
         isEvalSupported: false,
-        useWorkerFetch: false,
-        disableAutoFetch: true,
-        disableStream: true,
         verbosity: 0, // Suppress console warnings
       })
       logDebug('getDocument called, waiting for promise')
