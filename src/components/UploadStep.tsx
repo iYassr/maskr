@@ -179,7 +179,12 @@ export function UploadStep({ onFileUploaded }: UploadStepProps) {
 
       // Extract entities via NER
       setProcessingStatus('Detecting sensitive information...')
-      const nerResult = await window.api?.extractEntities(contentForNER)
+      // Combine custom names and keywords for detection
+      const customNames = [
+        ...(config.customEntities?.names || []),
+        ...(config.customEntities?.keywords || [])
+      ]
+      const nerResult = await window.api?.extractEntities(contentForNER, customNames)
 
       if (!nerResult?.success) {
         throw new Error(nerResult?.error || 'Failed to analyze document')
@@ -384,7 +389,12 @@ export function UploadStep({ onFileUploaded }: UploadStepProps) {
         throw new Error('Application not properly initialized. Please restart the app.')
       }
       // Extract entities via NER
-      const nerResult = await window.api.extractEntities(pastedText)
+      // Combine custom names and keywords for detection
+      const customNames = [
+        ...(config.customEntities?.names || []),
+        ...(config.customEntities?.keywords || [])
+      ]
+      const nerResult = await window.api.extractEntities(pastedText, customNames)
 
       if (!nerResult?.success) {
         throw new Error(nerResult?.error || 'Failed to analyze text')
