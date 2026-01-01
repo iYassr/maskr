@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>maskr - Component Communication Flow</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+      min-height: 100vh;
+      padding: 20px;
+      overflow: hidden;
+    }
+    h1 {
+      text-align: center;
+      color: #fff;
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+      height: 500px;
+    }
+
+    /* Components */
+    .component {
+      position: absolute;
+      border-radius: 8px;
+      padding: 8px 12px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      z-index: 10;
+    }
+    .component-sub {
+      font-size: 9px;
+      font-weight: 400;
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+
+    /* User */
+    .user {
+      left: 20px;
+      top: 200px;
+      background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+      color: white;
+      font-size: 14px;
+    }
+
+    /* Frontend components - Blue */
+    .frontend {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: white;
+    }
+    .upload { left: 100px; top: 50px; }
+    .review { left: 100px; top: 200px; }
+    .export { left: 100px; top: 350px; }
+
+    /* Store - Purple */
+    .store {
+      left: 250px;
+      top: 180px;
+      background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+      color: white;
+      min-width: 100px;
+      min-height: 80px;
+    }
+    .store-data {
+      font-size: 8px;
+      text-align: left;
+      margin-top: 5px;
+      opacity: 0.9;
+    }
+
+    /* Preload - Orange */
+    .preload {
+      left: 390px;
+      top: 195px;
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      color: white;
+    }
+
+    /* Main - Yellow */
+    .main {
+      left: 510px;
+      top: 195px;
+      background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+      color: #1a1a2e;
+    }
+
+    /* Services - Green */
+    .service {
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: white;
+      font-size: 10px;
+      padding: 6px 10px;
+    }
+    .parser { left: 640px; top: 50px; }
+    .detector { left: 640px; top: 110px; }
+    .ocr { left: 640px; top: 170px; }
+    .imagehash { left: 640px; top: 230px; }
+    .security { left: 640px; top: 290px; }
+    .profiles { left: 640px; top: 350px; }
+
+    /* SVG for paths */
+    .paths-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* Flow paths */
+    .flow-path {
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+    .flow-path.upload-flow { stroke: #3b82f6; }
+    .flow-path.detect-flow { stroke: #f97316; }
+    .flow-path.review-flow { stroke: #8b5cf6; }
+    .flow-path.export-flow { stroke: #22c55e; }
+
+    .flow-path.return {
+      stroke-dasharray: 5, 5;
+      stroke-width: 1.5;
+      opacity: 0.7;
+    }
+
+    /* Animated packets */
+    .packet {
+      r: 6;
+      filter: url(#glow);
+    }
+    .packet.upload { fill: #3b82f6; }
+    .packet.detect { fill: #f97316; }
+    .packet.review { fill: #8b5cf6; }
+    .packet.export { fill: #22c55e; }
+
+    /* Flow labels */
+    .flow-label {
+      position: absolute;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      color: white;
+    }
+    .flow-label.upload { background: #3b82f6; left: 10px; top: 30px; }
+    .flow-label.detect { background: #f97316; left: 10px; top: 100px; }
+    .flow-label.review { background: #8b5cf6; left: 10px; top: 250px; }
+    .flow-label.export { background: #22c55e; left: 10px; top: 380px; }
+
+    /* Data labels on paths */
+    .data-label {
+      position: absolute;
+      font-size: 8px;
+      color: rgba(255,255,255,0.7);
+      background: rgba(0,0,0,0.5);
+      padding: 2px 5px;
+      border-radius: 3px;
+      white-space: nowrap;
+    }
+
+    /* Legend */
+    .legend {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 10px;
+    }
+    .legend-title {
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 4px 0;
+      font-size: 9px;
+      color: rgba(255,255,255,0.8);
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .legend-dot.upload { background: #3b82f6; }
+    .legend-dot.detect { background: #f97316; }
+    .legend-dot.review { background: #8b5cf6; }
+    .legend-dot.export { background: #22c55e; }
+  </style>
+</head>
+<body>
+  <h1>maskr - Component Communication Flow</h1>
+
+  <div class="container">
+    <!-- Flow Labels -->
+    <div class="flow-label upload">1. UPLOAD</div>
+    <div class="flow-label detect">2. DETECT</div>
+    <div class="flow-label review">3. REVIEW</div>
+    <div class="flow-label export">4. EXPORT</div>
+
+    <!-- Components -->
+    <div class="component user">👤 User</div>
+
+    <div class="component frontend upload">UploadStep</div>
+    <div class="component frontend review">ReviewStep</div>
+    <div class="component frontend export">ExportStep</div>
+
+    <div class="component store">
+      Zustand Store
+      <div class="store-data">• content<br>• detections[]<br>• fileBuffer</div>
+    </div>
+
+    <div class="component preload">preload.ts<div class="component-sub">window.api</div></div>
+    <div class="component main">main.ts<div class="component-sub">IPC Handlers</div></div>
+
+    <div class="component service parser">document-parser</div>
+    <div class="component service detector">detector</div>
+    <div class="component service ocr">ocr</div>
+    <div class="component service imagehash">image-hash</div>
+    <div class="component service security">security</div>
+    <div class="component service profiles">profiles</div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-title">Data Flow</div>
+      <div class="legend-item"><div class="legend-dot upload"></div> Upload file</div>
+      <div class="legend-item"><div class="legend-dot detect"></div> Detect PII</div>
+      <div class="legend-item"><div class="legend-dot review"></div> Review</div>
+      <div class="legend-item"><div class="legend-dot export"></div> Export</div>
+    </div>
+
+    <!-- SVG Paths and Animations -->
+    <svg class="paths-svg" viewBox="0 0 900 500">
+      <defs>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+
+      <!-- Flow 1: Upload - User to UploadStep to Preload to Main to Parser -->
+      <path id="upload-path-1" class="flow-path upload-flow" d="M 70 70 L 100 70" />
+      <path id="upload-path-2" class="flow-path upload-flow" d="M 180 70 Q 350 70 400 210" />
+      <path id="upload-path-3" class="flow-path upload-flow" d="M 460 215 L 510 215" />
+      <path id="upload-path-4" class="flow-path upload-flow" d="M 590 210 Q 620 70 640 70" />
+      <path id="upload-return" class="flow-path upload-flow return" d="M 640 85 Q 400 120 300 180" />
+
+      <!-- Flow 2: Detect - UploadStep to Detector -->
+      <path id="detect-path-1" class="flow-path detect-flow" d="M 165 90 Q 165 130 370 130 Q 400 130 400 195" />
+      <path id="detect-path-2" class="flow-path detect-flow" d="M 460 210 L 510 210" />
+      <path id="detect-path-3" class="flow-path detect-flow" d="M 590 215 L 640 130" />
+      <path id="detect-return" class="flow-path detect-flow return" d="M 640 145 Q 450 160 350 180" />
+
+      <!-- Flow 3: Review - User to ReviewStep to Store -->
+      <path id="review-path-1" class="flow-path review-flow" d="M 70 220 L 100 220" />
+      <path id="review-path-2" class="flow-path review-flow" d="M 180 220 L 250 220" />
+
+      <!-- Flow 4: Export - User to ExportStep to Store to Main to Parser -->
+      <path id="export-path-1" class="flow-path export-flow" d="M 55 240 Q 55 370 100 370" />
+      <path id="export-path-2" class="flow-path export-flow" d="M 180 370 Q 220 370 260 260" />
+      <path id="export-path-3" class="flow-path export-flow" d="M 350 250 L 400 230" />
+      <path id="export-path-4" class="flow-path export-flow" d="M 460 225 L 510 225" />
+      <path id="export-path-5" class="flow-path export-flow" d="M 590 230 Q 620 370 640 370" />
+
+      <!-- Animated Packets -->
+      <!-- Upload Flow -->
+      <circle class="packet upload" r="0">
+        <animate attributeName="r" values="0;6;6;6;0" dur="4s" repeatCount="indefinite" />
+        <animateMotion dur="4s" repeatCount="indefinite">
+          <mpath href="#upload-path-2"/>
+        </animateMotion>
+      </circle>
+      <circle class="packet upload" r="0">
+        <animate attributeName="r" values="0;6;6;6;0" dur="4s" repeatCount="indefinite" begin="0.3s"/>
+        <animateMotion dur="4s" repeatCount="indefinite" begin="0.3s">
+          <mpath href="#upload-path-3"/>
+        </animateMotion>
+      </circle>
+      <circle class="packet upload" r="0">
+        <animate attributeName="r" values="0;6;6;6;0" dur="4s" repeatCount="indefinite" begin="0.6s"/>
+        <animateMotion dur="4s" repeatCount="indefinite" begin="0.6s">
+          <mpath href="#upload-path-4"/>
+        </animateMotion>
+      </circle>
+      <circle class="packet upload" r="0" opacity="0.6">
+        <animate attributeName="r" values="0;5;5;5;0" dur="4s" repeatCount="indefinite" begin="1s"/>
+        <animateMotion dur="4s" repeatCount="indefinite" begin="1s">
+          <mpath href="#upload-return"/>
+        </animateMotion>
+      </circle>
+
+      <!-- Detect Flow -->
+      <circle class="packet detect" r="0">
+        <animate attributeName="r" values="0;6;6;6;0" dur="3.5s" repeatCount="indefinite" begin="1s"/>
+        <animateMotion dur="3.5s" repeatCount="indefinite" begin="1s">
+          <mpath href="#detect-path-1"/>
+        </animateMotion>
+      </circle>
+      <circle class="packet detect" r="0">
+        <animate attributeName="r" values="0;6;6;6;0" dur="3.5s" repeatCount="indefinite" begin="1.3s"/>
+        <animateMotion dur="3.5s" repeatCount="indefinite" begin="1.3s">
+          <mpath href="#detect-path-2"/>
+        </animateMotion>
+      </circle>
+      <circle class="packet detect" r="0">
+        <animate attributeName="r" values="0;6;6;6;0" dur="3.5s" repeatCount="indefinite" begin="1.6s"/>
+        <animateMotion dur="3.5s" repeatCount="indefinite" begin="1.6s">
+          <mpath href="#detect-path-3"/>
+        </animateMotion>
+      </circle>
+      <circle class="packet detect" r="0" opacity="0.6">
+        <animate attributeName="r" values="0;5;5;5;0" dur="3.5s" repeatCount="indefinite" begin="2s"/>
+        <animateMotion dur="3.5s" repeatCount="indefinite" begin="2s">
+          <mpath href="#detect-return"/>
+        </animateMotion>
+      </circle>
+
+      <!-- Review Flow -->
+      <circle class="packet review" r="0">
+        <animate attributeName="r" values="0;6;6;6;0" dur="2s" repeatCount="indefinite" begin="0.5s"/>
+        <animateMotion dur="2s" repeatCount="indefinite" begin="0.5s">
+          <mpath href="#review-path-1"/>
+        </animateMotion>
+      </circle>
+      <circle class="packet review" r="0">
+        <animate attributeName="r" values="0;6;6;6;0" dur="2s" repeatCount="indefinite" begin="1s"/>
+        <animateMotion dur="2s" repeatCount="indefinite" begin="1s">
+          <mpath href="#review-path-2"/>
+        </animateMotion>
+      </circle>
+
+      <!-- Export Flow -->
+      <circle class="packet export" r="0">
+        <animate attributeName="r" values="0;6;6;6;0" dur="5s" repeatCount="indefinite" begin="2s"/>
+        <animateMotion dur="5s" repeatCount="indefinite" begin="2s">
+          <mpath href="#export-path-1"/>
+        </animateMotion>
+      </circle>
+      <circle class="packet export" r="0">
+        <animate attributeName="r" values="0;6;6;6;0" dur="5s" repeatCount="indefinite" begin="2.3s"/>
+        <animateMotion dur="5s" repeatCount="indefinite" begin="2.3s">
+          <mpath href="#export-path-2"/>
+        </animateMotion>
+      </circle>
+      <circle class="packet export" r="0">
+        <animate attributeName="r" values="0;6;6;6;0" dur="5s" repeatCount="indefinite" begin="2.6s"/>
+        <animateMotion dur="5s" repeatCount="indefinite" begin="2.6s">
+          <mpath href="#export-path-3"/>
+        </animateMotion>
+      </circle>
+      <circle class="packet export" r="0">
+        <animate attributeName="r" values="0;6;6;6;0" dur="5s" repeatCount="indefinite" begin="2.9s"/>
+        <animateMotion dur="5s" repeatCount="indefinite" begin="2.9s">
+          <mpath href="#export-path-4"/>
+        </animateMotion>
+      </circle>
+      <circle class="packet export" r="0">
+        <animate attributeName="r" values="0;6;6;6;0" dur="5s" repeatCount="indefinite" begin="3.2s"/>
+        <animateMotion dur="5s" repeatCount="indefinite" begin="3.2s">
+          <mpath href="#export-path-5"/>
+        </animateMotion>
+      </circle>
+
+      <!-- Data Labels -->
+      <text x="280" y="60" fill="rgba(255,255,255,0.6)" font-size="8">parseDocument(buffer)</text>
+      <text x="280" y="118" fill="rgba(255,255,255,0.6)" font-size="8">extractEntities(text)</text>
+      <text x="380" y="160" fill="rgba(255,255,255,0.6)" font-size="8">{ text, images[] }</text>
+      <text x="420" y="148" fill="rgba(255,255,255,0.6)" font-size="8">NEREntity[]</text>
+      <text x="190" y="235" fill="rgba(255,255,255,0.6)" font-size="8">approve/reject</text>
+      <text x="290" y="290" fill="rgba(255,255,255,0.6)" font-size="8">saveFile(masked)</text>
+    </svg>
+  </div>
+</body>
+</html>

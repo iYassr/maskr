@@ -1,0 +1,279 @@
+<mxGraphModel>
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    
+    <!-- Title -->
+    <mxCell id="title" value="maskr - Component Communication Flow" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=18;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="200" y="5" width="400" height="25" as="geometry"/>
+    </mxCell>
+    
+    <!-- User -->
+    <mxCell id="user" value="👤 User" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="20" y="200" width="70" height="40" as="geometry"/>
+    </mxCell>
+    
+    <!-- Frontend Components -->
+    <mxCell id="upload" value="UploadStep" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="120" y="50" width="90" height="40" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="review" value="ReviewStep" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="120" y="200" width="90" height="40" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="export" value="ExportStep" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="120" y="350" width="90" height="40" as="geometry"/>
+    </mxCell>
+    
+    <!-- Zustand Store -->
+    <mxCell id="store" value="Zustand Store" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="250" y="180" width="100" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="store-data" value="• content&#xa;• detections[]&#xa;• fileBuffer&#xa;• fileName" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;fontColor=#666666;" vertex="1" parent="1">
+      <mxGeometry x="255" y="200" width="90" height="55" as="geometry"/>
+    </mxCell>
+    
+    <!-- Preload Bridge -->
+    <mxCell id="preload" value="preload.ts&#xa;(window.api)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="390" y="190" width="80" height="50" as="geometry"/>
+    </mxCell>
+    
+    <!-- Main Process -->
+    <mxCell id="main" value="main.ts&#xa;IPC Handlers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="510" y="190" width="90" height="50" as="geometry"/>
+    </mxCell>
+    
+    <!-- Services -->
+    <mxCell id="parser" value="document-parser" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="630" y="50" width="90" height="35" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="detector" value="detector" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="630" y="110" width="90" height="35" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="ocr" value="ocr" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="630" y="170" width="90" height="35" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="imagehash" value="image-hash" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="630" y="230" width="90" height="35" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="security" value="security" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="630" y="290" width="90" height="35" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="profiles" value="profiles" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="630" y="350" width="90" height="35" as="geometry"/>
+    </mxCell>
+    
+    <!-- FLOW 1: Upload File -->
+    <mxCell id="flow1-label" value="1. UPLOAD FLOW" style="text;html=1;strokeColor=none;fillColor=#1a73e8;align=center;fontSize=9;fontStyle=1;fontColor=#ffffff;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="20" y="50" width="90" height="18" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="f1-1" value="" style="endArrow=classic;html=1;strokeColor=#1a73e8;strokeWidth=2;entryX=0;entryY=0.5;" edge="1" parent="1" target="upload">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="55" y="70" as="sourcePoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="f1-1-label" value="drops file" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#1a73e8;" vertex="1" parent="1">
+      <mxGeometry x="60" y="55" width="50" height="15" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="f1-2" value="" style="endArrow=classic;html=1;strokeColor=#1a73e8;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0;" edge="1" parent="1" source="upload" target="preload">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="350" y="70"/>
+          <mxPoint x="350" y="190"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="f1-2-label" value="parseDocument(buffer)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=8;fontColor=#1a73e8;" vertex="1" parent="1">
+      <mxGeometry x="220" y="55" width="110" height="15" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="f1-3" value="" style="endArrow=classic;html=1;strokeColor=#1a73e8;strokeWidth=2;exitX=1;exitY=0.25;entryX=0;entryY=0.5;" edge="1" parent="1" source="preload" target="main">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="f1-3-label" value="ipcRenderer.invoke" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=7;fontColor=#1a73e8;" vertex="1" parent="1">
+      <mxGeometry x="440" y="185" width="70" height="12" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="f1-4" value="" style="endArrow=classic;html=1;strokeColor=#1a73e8;strokeWidth=2;exitX=1;exitY=0;entryX=0;entryY=0.5;" edge="1" parent="1" source="main" target="parser">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="f1-4-label" value="parseDocument()" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=8;fontColor=#1a73e8;" vertex="1" parent="1">
+      <mxGeometry x="575" y="45" width="80" height="15" as="geometry"/>
+    </mxCell>
+    
+    <!-- Return path for parsing -->
+    <mxCell id="f1-ret" value="" style="endArrow=classic;html=1;strokeColor=#1a73e8;strokeWidth=1;dashed=1;exitX=0;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="parser" target="store">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="300" y="90"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="f1-ret-label" value="{ text, images[] }" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#1a73e8;" vertex="1" parent="1">
+      <mxGeometry x="310" y="75" width="80" height="15" as="geometry"/>
+    </mxCell>
+    
+    <!-- FLOW 2: Detect PII -->
+    <mxCell id="flow2-label" value="2. DETECT PII" style="text;html=1;strokeColor=none;fillColor=#e8710a;align=center;fontSize=9;fontStyle=1;fontColor=#ffffff;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="20" y="100" width="90" height="18" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="f2-1" value="" style="endArrow=classic;html=1;strokeColor=#e8710a;strokeWidth=2;exitX=0.5;exitY=1;entryX=0;entryY=0.25;" edge="1" parent="1" source="upload" target="preload">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="165" y="120"/>
+          <mxPoint x="360" y="120"/>
+          <mxPoint x="360" y="200"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="f2-1-label" value="extractEntities(text)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=8;fontColor=#e8710a;" vertex="1" parent="1">
+      <mxGeometry x="220" y="105" width="100" height="15" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="f2-2" value="" style="endArrow=classic;html=1;strokeColor=#e8710a;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="main" target="detector">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="f2-2-label" value="extractEntities()" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=8;fontColor=#e8710a;" vertex="1" parent="1">
+      <mxGeometry x="575" y="105" width="80" height="15" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="f2-ret" value="" style="endArrow=classic;html=1;strokeColor=#e8710a;strokeWidth=1;dashed=1;exitX=0;exitY=1;entryX=1;entryY=0;" edge="1" parent="1" source="detector" target="store">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="500" y="150"/>
+          <mxPoint x="350" y="150"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="f2-ret-label" value="NEREntity[]" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#e8710a;" vertex="1" parent="1">
+      <mxGeometry x="400" y="135" width="60" height="15" as="geometry"/>
+    </mxCell>
+    
+    <!-- FLOW 3: Review -->
+    <mxCell id="flow3-label" value="3. REVIEW" style="text;html=1;strokeColor=none;fillColor=#9673a6;align=center;fontSize=9;fontStyle=1;fontColor=#ffffff;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="20" y="250" width="90" height="18" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="f3-1" value="" style="endArrow=classic;startArrow=classic;html=1;strokeColor=#9673a6;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="review" target="store">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="f3-1-label" value="read/update detections" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="160" y="250" width="100" height="15" as="geometry"/>
+    </mxCell>
+    
+    <!-- User to Review -->
+    <mxCell id="u-review" value="" style="endArrow=classic;html=1;strokeColor=#9673a6;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="user" target="review">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="u-review-label" value="approve/reject" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="70" y="270" width="60" height="15" as="geometry"/>
+    </mxCell>
+    
+    <!-- FLOW 4: Export -->
+    <mxCell id="flow4-label" value="4. EXPORT" style="text;html=1;strokeColor=none;fillColor=#34a853;align=center;fontSize=9;fontStyle=1;fontColor=#ffffff;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="20" y="350" width="90" height="18" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="f4-1" value="" style="endArrow=classic;html=1;strokeColor=#34a853;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=1;" edge="1" parent="1" source="export" target="store">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="f4-1-label" value="get approved detections" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#34a853;" vertex="1" parent="1">
+      <mxGeometry x="150" y="295" width="100" height="15" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="f4-2" value="" style="endArrow=classic;html=1;strokeColor=#34a853;strokeWidth=2;exitX=1;exitY=1;entryX=0;entryY=0.75;" edge="1" parent="1" source="store" target="preload">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="f4-2-label" value="saveFile(masked)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=8;fontColor=#34a853;" vertex="1" parent="1">
+      <mxGeometry x="340" y="265" width="80" height="15" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="f4-3" value="" style="endArrow=classic;html=1;strokeColor=#34a853;strokeWidth=2;exitX=1;exitY=0.75;entryX=0;entryY=1;" edge="1" parent="1" source="preload" target="main">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="f4-4" value="" style="endArrow=classic;html=1;strokeColor=#34a853;strokeWidth=2;exitX=1;exitY=1;entryX=0;entryY=0.5;" edge="1" parent="1" source="main" target="parser">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="610" y="250"/>
+          <mxPoint x="610" y="370"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="f4-4-label" value="createMaskedDoc()" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=8;fontColor=#34a853;" vertex="1" parent="1">
+      <mxGeometry x="555" y="355" width="80" height="15" as="geometry"/>
+    </mxCell>
+    
+    <!-- User to Export -->
+    <mxCell id="u-export" value="" style="endArrow=classic;html=1;strokeColor=#34a853;strokeWidth=2;exitX=0.5;exitY=1;entryX=0;entryY=0.5;" edge="1" parent="1" source="user" target="export">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="55" y="370"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="u-export-label" value="clicks export" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=8;fontColor=#34a853;" vertex="1" parent="1">
+      <mxGeometry x="60" y="355" width="55" height="15" as="geometry"/>
+    </mxCell>
+    
+    <!-- Main to Services arrows -->
+    <mxCell id="m-ocr" value="" style="endArrow=classic;html=1;strokeColor=#82b366;strokeWidth=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="main" target="ocr">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="m-hash" value="" style="endArrow=classic;html=1;strokeColor=#82b366;strokeWidth=1;exitX=1;exitY=0.75;entryX=0;entryY=0.5;" edge="1" parent="1" source="main" target="imagehash">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="m-sec" value="" style="endArrow=classic;html=1;strokeColor=#82b366;strokeWidth=1;entryX=0;entryY=0.5;" edge="1" parent="1" target="security">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="600" y="230" as="sourcePoint"/>
+        <Array as="points">
+          <mxPoint x="610" y="307"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="m-prof" value="" style="endArrow=classic;html=1;strokeColor=#82b366;strokeWidth=1;entryX=0;entryY=0.5;" edge="1" parent="1" target="profiles">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="600" y="240" as="sourcePoint"/>
+        <Array as="points">
+          <mxPoint x="615" y="367"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    
+    <!-- Legend -->
+    <mxCell id="legend-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#cccccc;" vertex="1" parent="1">
+      <mxGeometry x="730" y="50" width="65" height="140" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg-title" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=9;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="730" y="55" width="65" height="15" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg1" value="Upload" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=8;fontColor=#1a73e8;" vertex="1" parent="1">
+      <mxGeometry x="740" y="75" width="50" height="12" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg2" value="Detect" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=8;fontColor=#e8710a;" vertex="1" parent="1">
+      <mxGeometry x="740" y="90" width="50" height="12" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg3" value="Review" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=8;fontColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="740" y="105" width="50" height="12" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg4" value="Export" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=8;fontColor=#34a853;" vertex="1" parent="1">
+      <mxGeometry x="740" y="120" width="50" height="12" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg5" value="— request" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=8;fontColor=#666666;" vertex="1" parent="1">
+      <mxGeometry x="735" y="140" width="55" height="12" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg6" value="--- response" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=8;fontColor=#666666;" vertex="1" parent="1">
+      <mxGeometry x="735" y="155" width="55" height="12" as="geometry"/>
+    </mxCell>
+    
+  </root>
+</mxGraphModel>

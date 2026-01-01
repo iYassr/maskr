@@ -1,9 +1,11 @@
 <p align="center">
-  <img src="logos/final/maskr-logo-banner.svg" alt="maskr" width="500">
+  <img src="logos/final/maskr-logo-banner.svg" alt="maskr - PII Detection and Document Sanitization Tool" width="500">
 </p>
 
+<h3 align="center">Detect & Mask Sensitive Data in Documents - 100% Offline Privacy Tool</h3>
+
 <p align="center">
-  <strong>A privacy-focused desktop app for detecting and masking sensitive information in documents</strong>
+  <strong>Open-source desktop app for PII detection, data masking, and document redaction. Protect personal information before sharing with AI, cloud services, or third parties.</strong>
 </p>
 
 <p align="center">
@@ -23,6 +25,10 @@
   <img src="https://img.shields.io/badge/react-19-61dafb" alt="React">
 </p>
 
+<p align="center">
+  <code>#pii-detection</code> <code>#data-masking</code> <code>#document-redaction</code> <code>#privacy-tool</code> <code>#gdpr-compliance</code> <code>#data-protection</code> <code>#sensitive-data</code> <code>#ocr</code> <code>#nlp</code> <code>#electron-app</code> <code>#open-source</code> <code>#offline-first</code>
+</p>
+
 ---
 
 ## Demo
@@ -33,7 +39,16 @@
 
 ## Why maskr?
 
-Before sharing documents with AI assistants, cloud services, or external parties, you need to ensure sensitive information is properly masked. maskr runs **100% locally** on your machine - no data ever leaves your device.
+**The Problem:** Before sharing documents with ChatGPT, Claude, cloud services, or external parties, you need to ensure PII (Personally Identifiable Information) is properly masked. Manual redaction is time-consuming and error-prone.
+
+**The Solution:** maskr automatically detects and masks sensitive data including names, emails, phone numbers, SSNs, credit cards, IBANs, and more. It runs **100% locally** on your machine - no data ever leaves your device. Perfect for GDPR compliance, HIPAA requirements, and privacy-conscious workflows.
+
+### Use Cases
+- **AI Safety** - Sanitize documents before uploading to ChatGPT, Claude, or other AI assistants
+- **Data Sharing** - Remove PII before sharing with contractors, partners, or vendors
+- **Compliance** - Meet GDPR, CCPA, HIPAA data protection requirements
+- **Development** - Create anonymized test datasets from production data
+- **Legal** - Redact sensitive information in legal documents
 
 ## Screenshots
 
@@ -71,17 +86,23 @@ Preview the sanitized document with all sensitive data replaced by placeholders.
 - **Light/Dark Theme** - Toggle between themes with persistent preference
 - **Drag & Drop** - Simply drop files to start scanning
 
-### Smart Detection
-- **Person Names** - Automatic NLP detection using compromise.js (first + last names)
+### Smart Detection (30+ Entity Types)
+- **Person Names** - NLP detection for English names + 150+ Arabic names (Mohammed, Ahmed, Fatima, etc.)
 - **Email Addresses** - Personal and corporate emails
-- **Phone Numbers** - US, UK, Saudi, and international formats
+- **Phone Numbers** - US, UK, Saudi (+966), UAE, and international formats
 - **Social Security Numbers** - US SSN format (XXX-XX-XXXX)
 - **Saudi National IDs** - 10-digit IDs starting with 1 (citizens) or 2 (residents/Iqama)
-- **Credit Cards** - With Luhn algorithm validation
-- **IBANs** - International bank account numbers with validation
+- **Credit Cards** - Visa, Mastercard, Amex, **Mada** (Saudi debit cards) with Luhn validation
+- **IBANs** - SA (Saudi), AE (UAE), and international bank account numbers
 - **IP Addresses** - Both IPv4 and IPv6
 - **URLs & Domains** - Full URLs and standalone domain names
-- **Financial Amounts** - Currency symbols and amounts
+- **Financial Amounts** - USD, SAR, EUR, GBP, and 20+ currency formats
+- **Dates of Birth** - Multiple date formats with context detection
+- **MAC Addresses** - Network hardware identifiers
+- **API Keys & Tokens** - AWS, Stripe, GitHub, and generic API keys
+- **License Plates** - US, UK, Saudi, and EU formats
+- **GPS Coordinates** - Latitude/longitude pairs
+- **VIN Numbers** - Vehicle identification numbers
 - **Custom Names** - Add your own names to detect (100% confidence)
 - **Custom Keywords** - Define project-specific terms
 
@@ -115,7 +136,7 @@ Preview the sanitized document with all sensitive data replaced by placeholders.
 Download the latest release for your platform from the [Releases page](https://github.com/iYassr/maskr/releases).
 
 #### macOS
-1. Download `maskr-1.3.1-arm64-mac.zip` (Apple Silicon) or `maskr-1.3.1-mac.zip` (Intel)
+1. Download `maskr-1.3.15-arm64-mac.zip` (Apple Silicon) or `maskr-1.3.15-mac.zip` (Intel)
 2. Extract the zip file
 3. **Important:** Remove the quarantine flag before first run:
    ```bash
@@ -130,12 +151,12 @@ Download the latest release for your platform from the [Releases page](https://g
 > **Why is this needed?** macOS quarantines apps downloaded from the internet. Since maskr is not yet notarized with Apple, you need to manually remove this flag.
 
 #### Windows
-- `maskr-1.3.1-setup.exe` - Standard installer
-- `maskr-1.3.1-portable.exe` - Portable version (no installation required)
+- `maskr-1.3.15-setup.exe` - Standard installer
+- `maskr-1.3.15-portable.exe` - Portable version (no installation required)
 
 #### Linux
 - `.AppImage` - Universal format, make executable with `chmod +x` and run
-- `.deb` - For Debian/Ubuntu: `sudo dpkg -i maskr_1.3.1_amd64.deb`
+- `.deb` - For Debian/Ubuntu: `sudo dpkg -i maskr_1.3.15_amd64.deb`
 
 ---
 
@@ -304,6 +325,56 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
+## Keywords & Topics
+
 <p align="center">
-  Made with privacy in mind
+  <a href="https://github.com/topics/pii-detection"><img src="https://img.shields.io/badge/-PII%20Detection-red" alt="PII Detection"></a>
+  <a href="https://github.com/topics/data-masking"><img src="https://img.shields.io/badge/-Data%20Masking-orange" alt="Data Masking"></a>
+  <a href="https://github.com/topics/document-redaction"><img src="https://img.shields.io/badge/-Document%20Redaction-yellow" alt="Document Redaction"></a>
+  <a href="https://github.com/topics/privacy"><img src="https://img.shields.io/badge/-Privacy-green" alt="Privacy"></a>
+  <a href="https://github.com/topics/gdpr"><img src="https://img.shields.io/badge/-GDPR-blue" alt="GDPR"></a>
+  <a href="https://github.com/topics/data-protection"><img src="https://img.shields.io/badge/-Data%20Protection-purple" alt="Data Protection"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/topics/electron"><img src="https://img.shields.io/badge/-Electron-9feaf9" alt="Electron"></a>
+  <a href="https://github.com/topics/react"><img src="https://img.shields.io/badge/-React-61dafb" alt="React"></a>
+  <a href="https://github.com/topics/typescript"><img src="https://img.shields.io/badge/-TypeScript-3178c6" alt="TypeScript"></a>
+  <a href="https://github.com/topics/nlp"><img src="https://img.shields.io/badge/-NLP-ff6f61" alt="NLP"></a>
+  <a href="https://github.com/topics/ocr"><img src="https://img.shields.io/badge/-OCR-4caf50" alt="OCR"></a>
+  <a href="https://github.com/topics/desktop-app"><img src="https://img.shields.io/badge/-Desktop%20App-607d8b" alt="Desktop App"></a>
+</p>
+
+### Related Searches
+- PII detection tool free download
+- Mask sensitive data in PDF DOCX XLSX
+- Document redaction software open source
+- Remove personal information from documents
+- GDPR compliance document sanitizer
+- HIPAA compliant data masking
+- Offline data masking tool
+- Credit card number masker Mada Visa Mastercard
+- SSN redaction software
+- Email address anonymizer
+- Phone number masking tool
+- Saudi National ID detector (رقم الهوية)
+- Iqama number masking (رقم الإقامة)
+- Saudi IBAN masking tool (SA IBAN)
+- Arabic name detection (أسماء عربية)
+- Mada card number detector
+- NLP name entity recognition
+- OCR text extraction privacy
+- Electron React TypeScript desktop app
+- Data anonymization tool
+- Personal data protection software
+- Document sanitization before AI upload
+
+---
+
+<p align="center">
+  <strong>maskr</strong> - Protect sensitive data before sharing documents
+</p>
+
+<p align="center">
+  <sub>PII Detection • Data Masking • Document Redaction • Privacy Protection • GDPR Compliance • Offline Processing</sub>
 </p>
