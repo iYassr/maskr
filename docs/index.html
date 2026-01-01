@@ -545,55 +545,6 @@
       padding: 80px 0;
       overflow: hidden;
       background: var(--bg-medium);
-      position: relative;
-    }
-
-    /* Floating Binary Background */
-    .binary-bg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      overflow: hidden;
-      pointer-events: none;
-    }
-
-    .binary {
-      position: absolute;
-      font-family: 'Courier New', monospace;
-      font-size: 14px;
-      color: var(--accent);
-      opacity: 0;
-      animation: floatUp 8s linear infinite;
-    }
-
-    .binary:nth-child(1) { left: 5%; animation-delay: 0s; }
-    .binary:nth-child(2) { left: 15%; animation-delay: 1s; }
-    .binary:nth-child(3) { left: 25%; animation-delay: 2s; }
-    .binary:nth-child(4) { left: 35%; animation-delay: 0.5s; }
-    .binary:nth-child(5) { left: 45%; animation-delay: 3s; }
-    .binary:nth-child(6) { left: 55%; animation-delay: 1.5s; }
-    .binary:nth-child(7) { left: 65%; animation-delay: 2.5s; }
-    .binary:nth-child(8) { left: 75%; animation-delay: 0.8s; }
-    .binary:nth-child(9) { left: 85%; animation-delay: 3.5s; }
-    .binary:nth-child(10) { left: 95%; animation-delay: 1.2s; }
-
-    @keyframes floatUp {
-      0% {
-        bottom: -50px;
-        opacity: 0;
-      }
-      10% {
-        opacity: 0.15;
-      }
-      90% {
-        opacity: 0.15;
-      }
-      100% {
-        bottom: 100%;
-        opacity: 0;
-      }
     }
 
     .transform-track {
@@ -603,7 +554,8 @@
       margin: 0 auto;
     }
 
-    /* Holographic Maskr Gate */
+
+    /* Maskr gate with pulse */
     .maskr-gate {
       position: absolute;
       left: 50%;
@@ -611,16 +563,7 @@
       transform: translate(-50%, -50%);
       width: 100px;
       height: 260px;
-      background: linear-gradient(
-        180deg,
-        var(--accent) 0%,
-        #ff6b35 25%,
-        var(--accent) 50%,
-        #ffb347 75%,
-        var(--accent) 100%
-      );
-      background-size: 100% 200%;
-      animation: holographic 3s ease-in-out infinite, gatePulse 2s ease-in-out infinite;
+      background: linear-gradient(180deg, var(--accent) 0%, var(--accent-hover) 100%);
       border-radius: 12px;
       display: flex;
       align-items: center;
@@ -633,30 +576,20 @@
       box-shadow:
         0 0 40px rgba(254, 128, 25, 0.4),
         0 0 80px rgba(254, 128, 25, 0.2);
-    }
-
-    @keyframes holographic {
-      0%, 100% {
-        background-position: 0% 0%;
-      }
-      50% {
-        background-position: 0% 100%;
-      }
+      animation: gatePulse 2s ease-in-out infinite;
     }
 
     @keyframes gatePulse {
       0%, 100% {
         box-shadow:
           0 0 40px rgba(254, 128, 25, 0.4),
-          0 0 80px rgba(254, 128, 25, 0.2),
-          inset 0 0 20px rgba(255, 255, 255, 0.1);
+          0 0 80px rgba(254, 128, 25, 0.2);
       }
       50% {
         box-shadow:
           0 0 60px rgba(254, 128, 25, 0.6),
           0 0 100px rgba(254, 128, 25, 0.3),
-          0 0 140px rgba(254, 128, 25, 0.1),
-          inset 0 0 30px rgba(255, 255, 255, 0.2);
+          0 0 140px rgba(254, 128, 25, 0.1);
       }
     }
 
@@ -672,27 +605,24 @@
       border-radius: 12px 12px 0 0;
     }
 
-    /* Holographic shimmer overlay */
+    /* Transformation flash */
     .maskr-gate::after {
       content: '';
       position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.3),
-        transparent
-      );
-      animation: shimmer 2s ease-in-out infinite;
-      border-radius: 12px;
+      top: -20px;
+      left: -20px;
+      right: -20px;
+      bottom: -20px;
+      border-radius: 20px;
+      background: radial-gradient(circle, rgba(254, 128, 25, 0.4) 0%, transparent 70%);
+      animation: transformFlash 0.8s ease-out infinite;
+      pointer-events: none;
     }
 
-    @keyframes shimmer {
-      0% { left: -100%; }
-      50%, 100% { left: 100%; }
+    @keyframes transformFlash {
+      0%, 40%, 100% { opacity: 0; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.1); }
+      60% { opacity: 0; transform: scale(1.2); }
     }
 
     @keyframes scan {
@@ -713,7 +643,6 @@
       top: 50%;
       opacity: 0;
       pointer-events: none;
-      box-shadow: 0 0 6px var(--accent);
     }
 
     .particle:nth-child(1) { animation: particleFloat 2s ease-out infinite 0s; }
@@ -745,7 +674,7 @@
     .particle:nth-child(5) { --x: -20px; --y: 45px; }
     .particle:nth-child(6) { --x: 25px; --y: -45px; }
 
-    /* Data items with icons and neon trails */
+    /* Data items with icons */
     .data-item {
       position: absolute;
       padding: 8px 14px 8px 36px;
@@ -767,31 +696,11 @@
       opacity: 0.8;
     }
 
-    .data-item .text {
-      display: inline-block;
-    }
-
     .data-item.sensitive {
       background: rgba(251, 73, 52, 0.15);
       border: 1px solid var(--red);
       color: var(--red);
       animation: flowIn 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-      box-shadow: 0 0 15px rgba(251, 73, 52, 0.3);
-    }
-
-    /* Neon trail for sensitive items */
-    .data-item.sensitive::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      border-radius: 6px;
-      background: linear-gradient(90deg, transparent, rgba(251, 73, 52, 0.4), transparent);
-      filter: blur(8px);
-      z-index: -1;
-      animation: trailPulse 1s ease-in-out infinite;
     }
 
     .data-item.masked {
@@ -799,27 +708,6 @@
       border: 1px solid var(--accent);
       color: var(--accent);
       animation: flowOut 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-      box-shadow: 0 0 15px rgba(254, 128, 25, 0.3);
-    }
-
-    /* Neon trail for masked items */
-    .data-item.masked::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      border-radius: 6px;
-      background: linear-gradient(90deg, transparent, rgba(254, 128, 25, 0.4), transparent);
-      filter: blur(8px);
-      z-index: -1;
-      animation: trailPulse 1s ease-in-out infinite;
-    }
-
-    @keyframes trailPulse {
-      0%, 100% { opacity: 0.5; transform: scaleX(1); }
-      50% { opacity: 1; transform: scaleX(1.1); }
     }
 
     /* Row positions - 6 rows now */
@@ -843,7 +731,6 @@
         left: -220px;
         opacity: 0;
         transform: scale(0.9);
-        filter: blur(2px);
       }
       5% {
         opacity: 0;
@@ -851,7 +738,6 @@
       15% {
         opacity: 1;
         transform: scale(1);
-        filter: blur(0);
       }
       42% {
         left: calc(50% - 170px);
@@ -862,7 +748,6 @@
         left: calc(50% - 160px);
         opacity: 0;
         transform: scale(1.1);
-        filter: blur(4px);
       }
       50%, 100% {
         left: calc(50% - 160px);
@@ -876,13 +761,11 @@
         right: calc(50% - 160px);
         opacity: 0;
         transform: scale(1.1);
-        filter: blur(4px);
       }
       52% {
         right: calc(50% - 170px);
         opacity: 1;
         transform: scale(1);
-        filter: blur(0);
       }
       85% {
         opacity: 1;
@@ -890,7 +773,6 @@
       }
       95% {
         opacity: 0;
-        filter: blur(2px);
       }
       100% {
         right: -220px;
@@ -981,19 +863,6 @@
 
   <!-- Transform Animation -->
   <section class="transform-animation">
-    <!-- Floating Binary Background -->
-    <div class="binary-bg">
-      <span class="binary">01001</span>
-      <span class="binary">11010</span>
-      <span class="binary">00110</span>
-      <span class="binary">10101</span>
-      <span class="binary">01100</span>
-      <span class="binary">11001</span>
-      <span class="binary">00011</span>
-      <span class="binary">10010</span>
-      <span class="binary">01011</span>
-      <span class="binary">11100</span>
-    </div>
     <div class="container">
       <div class="transform-track">
         <!-- Sensitive data flowing in from left -->
@@ -1401,61 +1270,6 @@
     "license": "https://opensource.org/licenses/MIT",
     "keywords": "PII detection, data masking, document redaction, privacy, GDPR, HIPAA, Saudi ID, Mada card, Arabic names, IBAN, SSN, credit card, OCR, NLP"
   }
-  </script>
-
-  <!-- Text Scramble Effect -->
-  <script>
-    class TextScramble {
-      constructor(el) {
-        this.el = el;
-        this.chars = '!<>-_\\/[]{}—=+*^?#_01';
-        this.originalText = el.textContent;
-      }
-
-      scramble() {
-        const text = this.originalText;
-        let iteration = 0;
-        const maxIterations = text.length * 3;
-
-        const interval = setInterval(() => {
-          this.el.textContent = text.split('').map((char, i) => {
-            if (i < iteration / 3) return text[i];
-            return this.chars[Math.floor(Math.random() * this.chars.length)];
-          }).join('');
-
-          iteration++;
-          if (iteration > maxIterations) {
-            this.el.textContent = text;
-            clearInterval(interval);
-          }
-        }, 30);
-      }
-    }
-
-    // Apply scramble effect to masked items
-    function initScramble() {
-      const maskedItems = document.querySelectorAll('.data-item.masked');
-      maskedItems.forEach((item, index) => {
-        const textNode = item.childNodes[item.childNodes.length - 1];
-        if (textNode && textNode.nodeType === 3) {
-          const span = document.createElement('span');
-          span.className = 'text';
-          span.textContent = textNode.textContent.trim();
-          textNode.replaceWith(span);
-
-          const scrambler = new TextScramble(span);
-          const delay = (index * 800) + 2600; // Sync with animation
-
-          setInterval(() => {
-            setTimeout(() => scrambler.scramble(), 0);
-          }, 5000);
-
-          setTimeout(() => scrambler.scramble(), delay);
-        }
-      });
-    }
-
-    document.addEventListener('DOMContentLoaded', initScramble);
   </script>
 </body>
 </html>
