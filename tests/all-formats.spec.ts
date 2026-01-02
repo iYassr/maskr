@@ -374,7 +374,7 @@ test.describe('maskr All Formats E2E Tests', () => {
     await personalTab.click()
     await page.waitForTimeout(500)
 
-    let emailVisible = await page.locator('table').getByText('ahmed.rashid@acme-corp.com').first().isVisible().catch(() => false)
+    const emailVisible = await page.locator('table').getByText('ahmed.rashid@acme-corp.com').first().isVisible().catch(() => false)
     console.log('Personal tab - email visible:', emailVisible)
 
     // Test Financial tab
@@ -382,7 +382,7 @@ test.describe('maskr All Formats E2E Tests', () => {
     await financialTab.click()
     await page.waitForTimeout(500)
 
-    let creditCardVisible = await page.locator('table').getByText('4532015112830366').first().isVisible().catch(() => false)
+    const creditCardVisible = await page.locator('table').getByText('4532015112830366').first().isVisible().catch(() => false)
     console.log('Financial tab - credit card visible:', creditCardVisible)
 
     // Test Technical tab
@@ -390,7 +390,7 @@ test.describe('maskr All Formats E2E Tests', () => {
     await technicalTab.click()
     await page.waitForTimeout(500)
 
-    let ipVisible = await page.locator('table').getByText('192.168.1.100').first().isVisible().catch(() => false)
+    const ipVisible = await page.locator('table').getByText('192.168.1.100').first().isVisible().catch(() => false)
     console.log('Technical tab - IP visible:', ipVisible)
   })
 

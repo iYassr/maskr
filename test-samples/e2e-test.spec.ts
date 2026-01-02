@@ -162,7 +162,7 @@ export async function verifyOutputFiles() {
     console.log(`\nChecking: ${file}`)
     console.log('-'.repeat(40))
 
-    let issues = []
+    const issues = []
 
     // Check for remaining PII
     for (const email of expectedPII.emails) {

@@ -1005,7 +1005,7 @@ function detectURLs(
   addEntity: (entity: NEREntity) => void
 ): void {
   // URL pattern - matches http://, https://, ftp://, etc.
-  const urlPattern = /\b(?:https?|ftp):\/\/[^\s<>\[\]"'`,;)]+/gi
+  const urlPattern = /\b(?:https?|ftp):\/\/[^\s<>[\]"'`,;)]+/gi
 
   let match: RegExpExecArray | null
   while ((match = urlPattern.exec(text)) !== null) {
@@ -1239,8 +1239,8 @@ function detectDOB(
   const dobPatterns = [
     // With DOB context - match any year
     // "Date of Birth: 15/03/1985" or "DOB: 1990-07-22"
-    /\b(?:date\s+of\s+birth|dob|birth\s*date|born|birthday)[:\s]+(\d{1,2}[-/\.]\d{1,2}[-/\.]\d{4})\b/gi,
-    /\b(?:date\s+of\s+birth|dob|birth\s*date|born|birthday)[:\s]+(\d{4}[-/\.]\d{1,2}[-/\.]\d{1,2})\b/gi,
+    /\b(?:date\s+of\s+birth|dob|birth\s*date|born|birthday)[:\s]+(\d{1,2}[-/.]\d{1,2}[-/.]\d{4})\b/gi,
+    /\b(?:date\s+of\s+birth|dob|birth\s*date|born|birthday)[:\s]+(\d{4}[-/.]\d{1,2}[-/.]\d{1,2})\b/gi,
     /\b(?:date\s+of\s+birth|dob|birth\s*date|born|birthday)[:\s]+([A-Za-z]+\s+\d{1,2},?\s+\d{4})\b/gi,
     /\b(?:date\s+of\s+birth|dob|birth\s*date|born|birthday)[:\s]+(\d{1,2}\s+[A-Za-z]+\s+\d{4})\b/gi,
 

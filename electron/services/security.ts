@@ -354,8 +354,10 @@ export function sanitizeFilename(filename: string): string {
     return 'document'
   }
 
-  // Remove path separators and null bytes
+  // Remove path separators and null bytes (security measure)
+  // eslint-disable-next-line no-control-regex -- null byte check is intentional for security
+  const sanitizePattern = /[/\\:*?"<>|\x00]/g
   return filename
-    .replace(/[/\\:*?"<>|\x00]/g, '_')
+    .replace(sanitizePattern, '_')
     .slice(0, 255)
 }
