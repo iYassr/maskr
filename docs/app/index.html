@@ -773,8 +773,8 @@
       }
 
       // 2. NLP-based name detection (using Compromise)
-      if (typeof nlp !== 'undefined') {
-        const doc = nlp(text);
+      if (typeof window.nlp !== 'undefined') {
+        const doc = window.nlp(text);
         const people = doc.people();
         const foundNames = new Set();
 
