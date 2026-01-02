@@ -838,12 +838,32 @@
         });
       }
 
-      // 5. Phone numbers
+      // 5. Phone numbers (comprehensive patterns)
       const phonePatterns = [
+        // International with + prefix
         /\+\d{1,3}[\s.-]?\(?\d{1,4}\)?[\s.-]?\d{1,4}[\s.-]?\d{1,4}[\s.-]?\d{0,4}\b/g,
+        // Saudi Arabia
         /(?:\+966|00966|0)5\d{8}\b/g,
+        /(?:\+966|00966)[\s.-]?5\d[\s.-]?\d{3}[\s.-]?\d{4}\b/g,
+        // UAE
+        /(?:\+971|00971)[\s.-]?5\d[\s.-]?\d{3}[\s.-]?\d{4}\b/g,
+        // US/Canada
         /\(\d{3}\)[\s.-]?\d{3}[\s.-]?\d{4}\b/g,
-        /\b\d{3}[\s.-]\d{3}[\s.-]\d{4}\b/g
+        /\b\d{3}[\s.-]\d{3}[\s.-]\d{4}\b/g,
+        // UK
+        /(?:\+44|0044)[\s.-]?\d{2,4}[\s.-]?\d{3,4}[\s.-]?\d{3,4}\b/g,
+        /\b0[1-9]\d{2,3}[\s.-]?\d{3}[\s.-]?\d{3,4}\b/g,
+        /\b07\d{3}[\s.-]?\d{6}\b/g,
+        // Germany
+        /(?:\+49|0049)[\s.-]?\d{2,4}[\s.-]?\d{3,8}\b/g,
+        // France
+        /(?:\+33|0033)[\s.-]?\d[\s.-]?\d{2}[\s.-]?\d{2}[\s.-]?\d{2}[\s.-]?\d{2}\b/g,
+        // Generic international
+        /\b\d{3,4}[\s.-]\d{3,4}[\s.-]\d{3,4}(?:[\s.-]\d{1,4})?\b/g,
+        // Toll-free US
+        /\b1[\s.-]?8(?:00|44|55|66|77|88)[\s.-]?\d{3}[\s.-]?\d{4}\b/g,
+        // Extensions
+        /\b\d{3}[\s.-]\d{3}[\s.-]\d{4}[\s.-]?(?:ext|x|extension)[\s.]?\d{1,5}\b/gi
       ];
 
       for (const pattern of phonePatterns) {
@@ -893,22 +913,41 @@
         }
       }
 
-      // 8. Credit cards
+      // 8. Credit cards (with Mada, JCB, Diners, UnionPay support)
       const cardPatterns = [
         /\b\d{4}[\s]\d{4}[\s]\d{4}[\s]\d{4}\b/g,
         /\b\d{4}[-]\d{4}[-]\d{4}[-]\d{4}\b/g,
         /\b\d{16}\b/g,
         /\b\d{4}[\s]\d{6}[\s]\d{5}\b/g,
-        /\b\d{15}\b/g
+        /\b\d{15}\b/g,
+        /\b\d{13}\b/g  // Some Visa cards
       ];
+
+      // Mada BIN prefixes (Saudi debit cards)
+      const madaBins = /^(4766|5297|4059|4244|4364|4473|4543|4834|4903|4918|4966|5078|5128|5160|5210|5213|5265|5289|5310|5329|5341|5349|5371|5407|5434|5435|5459|5460|5480|5534|5545|5860|5862|5898|6051|6136|6200|6208|6304|6367|6521|6586|6396|6371)/;
 
       for (const pattern of cardPatterns) {
         pattern.lastIndex = 0;
         while ((match = pattern.exec(text)) !== null) {
           const digits = match[0].replace(/\D/g, '');
-          if (isValidLuhn(digits)) {
-            const isValidPrefix = digits.startsWith('4') || /^5[1-5]/.test(digits) ||
-              /^3[47]/.test(digits) || digits.startsWith('6011');
+          const isMadaCard = madaBins.test(digits);
+          const passesValidation = isMadaCard || isValidLuhn(digits);
+
+          if (passesValidation) {
+            const isValidPrefix = isMadaCard ||
+              digits.startsWith('4') ||      // Visa
+              /^5[1-5]/.test(digits) ||      // Mastercard
+              /^2[2-7]/.test(digits) ||      // Mastercard 2-series
+              /^3[47]/.test(digits) ||       // Amex
+              digits.startsWith('6011') ||   // Discover
+              /^65/.test(digits) ||          // Discover
+              /^64[4-9]/.test(digits) ||     // Discover
+              /^35[2-8]/.test(digits) ||     // JCB
+              /^30[0-5]/.test(digits) ||     // Diners Club
+              /^36/.test(digits) ||          // Diners Club International
+              /^38/.test(digits) ||          // Diners Club
+              /^62/.test(digits);            // UnionPay
+
             if (isValidPrefix) {
               addEntity({
                 text: match[0],
@@ -945,12 +984,27 @@
         }
       }
 
-      // 10. Financial amounts
+      // 10. Financial amounts (comprehensive patterns)
       const currencyPatterns = [
-        /\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?(?:\s*(?:K|M|B|million|billion))?\b/gi,
-        /€\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?\b/gi,
-        /£\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?\b/gi,
-        /(?:SAR|AED|USD|EUR|GBP)\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?\b/gi
+        // Dollar, Euro, Pound with symbols
+        /\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi,
+        /€\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi,
+        /\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?€/g,
+        /£\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi,
+        // Currency codes with amounts
+        /(?:SAR|AED|USD|EUR|GBP|JPY|INR|CHF|CAD|AUD|EGP|TRY|ZAR|BRL|KWD|QAR|BHD|OMR)\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,3})?(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi,
+        /\d{1,3}(?:,\d{3})*(?:\.\d{1,3})?\s*(?:SAR|AED|USD|EUR|GBP|JPY|INR|CHF|CAD|AUD|EGP|TRY|ZAR|BRL|KWD|QAR|BHD|OMR)\b/gi,
+        // SR (Saudi Riyal short form)
+        /SR\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi,
+        /\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?\s*SR\b/gi,
+        // Arabic currency symbol
+        /ر\.س\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?/g,
+        /\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?\s*ر\.س/g,
+        // Yen, Rupee symbols
+        /¥\s*\d{1,3}(?:,\d{3})*(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi,
+        /₹\s*\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi,
+        // Generic with currency words
+        /\d+(?:,\d{3})*(?:\.\d{1,2})?\s*(?:dollars?|euros?|pounds?|riyals?|dirhams?|yen|rupees?|dinars?|francs?)(?:\s*(?:K|M|B|million|billion|thousand))?\b/gi
       ];
 
       for (const pattern of currencyPatterns) {
@@ -1010,6 +1064,210 @@
           end: start + match[0].length,
           confidence: 90
         });
+      }
+
+      // 14. Dates of Birth
+      const dobPatterns = [
+        /\b(?:date\s+of\s+birth|dob|birth\s*date|born|birthday)[:\s]+(\d{1,2}[-/\.]\d{1,2}[-/\.]\d{4})\b/gi,
+        /\b(?:date\s+of\s+birth|dob|birth\s*date|born|birthday)[:\s]+(\d{4}[-/\.]\d{1,2}[-/\.]\d{1,2})\b/gi,
+        /\b(0?[1-9]|[12][0-9]|3[01])[-/\.](0?[1-9]|1[0-2])[-/\.](200[0-9]|201[0-9]|202[0-5])\b/g,
+        /\b(200[0-9]|201[0-9]|202[0-5])[-/](0?[1-9]|1[0-2])[-/](0?[1-9]|[12][0-9]|3[01])\b/g
+      ];
+      for (const pattern of dobPatterns) {
+        pattern.lastIndex = 0;
+        while ((match = pattern.exec(text)) !== null) {
+          addEntity({
+            text: match[0],
+            type: 'dob',
+            start: match.index,
+            end: match.index + match[0].length,
+            confidence: 85
+          });
+        }
+      }
+
+      // 15. MAC Addresses
+      const macPatterns = [
+        /\b([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}\b/g,
+        /\b[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}\b/g
+      ];
+      for (const pattern of macPatterns) {
+        pattern.lastIndex = 0;
+        while ((match = pattern.exec(text)) !== null) {
+          addEntity({
+            text: match[0],
+            type: 'mac_address',
+            start: match.index,
+            end: match.index + match[0].length,
+            confidence: 95
+          });
+        }
+      }
+
+      // 16. API Keys
+      const apiPatterns = [
+        /\b(sk_live_[a-zA-Z0-9]{24,})\b/g,
+        /\b(pk_live_[a-zA-Z0-9]{24,})\b/g,
+        /\b(AKIA[0-9A-Z]{16})\b/g,
+        /\b(AIza[0-9A-Za-z_-]{35})\b/g,
+        /\b(ghp_[a-zA-Z0-9]{36})\b/g,
+        /\bBearer\s+([a-zA-Z0-9_-]{20,})\b/g,
+        /\beyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\b/g
+      ];
+      for (const pattern of apiPatterns) {
+        pattern.lastIndex = 0;
+        while ((match = pattern.exec(text)) !== null) {
+          addEntity({
+            text: match[0],
+            type: 'api_key',
+            start: match.index,
+            end: match.index + match[0].length,
+            confidence: 95
+          });
+        }
+      }
+
+      // 17. License Plates
+      const platePatterns = [
+        /\b[A-Z]{3}\s*\d{4}\b/g,
+        /\b\d{4}\s*[A-Z]{3}\b/g,
+        /\b[A-Z]{2,3}\s+\d{3,4}\b/g,
+        /\b(?:plate|license|vehicle)[:\s#]+([A-Z0-9]{2,3}[-\s]?[A-Z0-9]{3,4})\b/gi
+      ];
+      for (const pattern of platePatterns) {
+        pattern.lastIndex = 0;
+        while ((match = pattern.exec(text)) !== null) {
+          const plateText = match[1] || match[0];
+          if (!/[A-Z]/i.test(plateText) || !/\d/.test(plateText)) continue;
+          addEntity({
+            text: plateText,
+            type: 'license_plate',
+            start: match.index,
+            end: match.index + match[0].length,
+            confidence: 85
+          });
+        }
+      }
+
+      // 18. Medical Records
+      const medicalPatterns = [
+        /\b(MRN|PAT|INS|POL|RX|LAB)[-:#\s]?\d{6,12}\b/gi,
+        /\bICD[-\s]?10[-\s]?[A-Z]\d{2}(?:\.\d{1,2})?\b/gi,
+        /\bCPT[-\s]?\d{5}\b/gi,
+        /\bNPI[-:\s]?\d{10}\b/gi
+      ];
+      for (const pattern of medicalPatterns) {
+        pattern.lastIndex = 0;
+        while ((match = pattern.exec(text)) !== null) {
+          addEntity({
+            text: match[0],
+            type: 'medical_record',
+            start: match.index,
+            end: match.index + match[0].length,
+            confidence: 90
+          });
+        }
+      }
+
+      // 19. GPS Coordinates
+      const gpsPatterns = [
+        /\(?\s*-?\d{1,3}\.\d{4,8}\s*,\s*-?\d{1,3}\.\d{4,8}\s*\)?/g,
+        /\d{1,3}°\d{1,2}'[\d.]+"\s*[NSEW]\s+\d{1,3}°\d{1,2}'[\d.]+"\s*[NSEW]/g
+      ];
+      for (const pattern of gpsPatterns) {
+        pattern.lastIndex = 0;
+        while ((match = pattern.exec(text)) !== null) {
+          addEntity({
+            text: match[0],
+            type: 'gps',
+            start: match.index,
+            end: match.index + match[0].length,
+            confidence: 90
+          });
+        }
+      }
+
+      // 20. VIN Numbers (17 alphanumeric, no I, O, Q)
+      const vinPattern = /\b[A-HJ-NPR-Z0-9]{17}\b/g;
+      while ((match = vinPattern.exec(text)) !== null) {
+        const vin = match[0];
+        if (!/[A-Z]/.test(vin) || !/\d/.test(vin)) continue;
+        addEntity({
+          text: vin,
+          type: 'vin',
+          start: match.index,
+          end: match.index + vin.length,
+          confidence: 85
+        });
+      }
+
+      // 21. Company/Project Codes
+      const codePatterns = [
+        /\b(PROJ|PROJECT)[-_]?\d{4}[-_]\d{3,5}\b/gi,
+        /\b(CNT|CONTRACT)[-_]?\d{4}[-_]\d{3,6}\b/gi,
+        /\b(INV|INVOICE)[-_]?\d{4}[-_]\d{4,6}\b/gi,
+        /\b(PO|PURCHASE[-_]?ORDER)[-_]?\d{4}[-_]\d{4,6}\b/gi,
+        /\b(REF|REFERENCE)[-_]?\d{4}[-_]\d{4,6}\b/gi
+      ];
+      for (const pattern of codePatterns) {
+        pattern.lastIndex = 0;
+        while ((match = pattern.exec(text)) !== null) {
+          addEntity({
+            text: match[0],
+            type: 'company_code',
+            start: match.index,
+            end: match.index + match[0].length,
+            confidence: 90
+          });
+        }
+      }
+
+      // 22. Passport Numbers
+      const passportPatterns = [
+        /\b(?:passport|travel\s+document|passport\s+(?:number|no|#)|passport:)\s*[:\s#]*([A-Z]{1,2}\d{6,8})\b/gi,
+        /\b(?:passport|travel\s+document|passport\s+(?:number|no|#)|passport:)\s*[:\s#]*(\d{8,9})\b/gi,
+        /\bpassport[:\s#]+([A-Z0-9]{6,12})\b/gi,
+        /\b([A-Z][A-Z]?\d{7,8})\b(?=.*passport)/gi,
+        /\bpassport.*?\b([A-Z][A-Z]?\d{7,8})\b/gi
+      ];
+      for (const pattern of passportPatterns) {
+        pattern.lastIndex = 0;
+        while ((match = pattern.exec(text)) !== null) {
+          const passportNum = match[1] || match[0];
+          const numStart = match[0].indexOf(passportNum);
+          const start = match.index + numStart;
+          if (passportNum.length >= 6 && passportNum.length <= 12) {
+            addEntity({
+              text: passportNum,
+              type: 'passport',
+              start: start,
+              end: start + passportNum.length,
+              confidence: 85
+            });
+          }
+        }
+      }
+
+      // 23. Driver's Licenses
+      const dlPatterns = [
+        /\b(?:driver'?s?\s*license|DL|driving\s+license)[:\s#]+([A-Z0-9]{7,15})\b/gi,
+        /\b[A-Z]{5}\d{6}[A-Z0-9]{5}\b/g,  // UK format
+        /\b[A-Z]\d{7,8}\b/g,              // US format
+        /\b(?:saudi\s+dl|رخصة)[:\s#]?\d{10}\b/gi
+      ];
+      for (const pattern of dlPatterns) {
+        pattern.lastIndex = 0;
+        while ((match = pattern.exec(text)) !== null) {
+          const dlText = match[1] || match[0];
+          const start = match[1] ? match.index + match[0].indexOf(match[1]) : match.index;
+          addEntity({
+            text: dlText,
+            type: 'drivers_license',
+            start: start,
+            end: start + dlText.length,
+            confidence: 85
+          });
+        }
       }
 
       return entities.sort((a, b) => a.start - b.start);

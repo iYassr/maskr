@@ -5,10 +5,11 @@
 <h3 align="center">Never Leak Sensitive Data Again.</h3>
 
 <p align="center">
-  <strong>Open-source desktop app for PII detection, data masking, and document redaction. Protect personal information before sharing with AI, cloud services, or third parties.</strong>
+  <strong>Open-source desktop & web app for PII detection, data masking, and document redaction. Protect personal information before sharing with AI, cloud services, or third parties.</strong>
 </p>
 
 <p align="center">
+  <a href="#try-online">Try Online</a> •
   <a href="#screenshots">Screenshots</a> •
   <a href="#features">Features</a> •
   <a href="#installation">Installation</a> •
@@ -18,7 +19,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey" alt="Platform">
+  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Web-lightgrey" alt="Platform">
   <img src="https://img.shields.io/badge/node-%3E%3D24-green" alt="Node Version">
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="License">
   <img src="https://img.shields.io/badge/electron-39-9feaf9" alt="Electron">
@@ -26,7 +27,7 @@
 </p>
 
 <p align="center">
-  <code>#pii-detection</code> <code>#data-masking</code> <code>#document-redaction</code> <code>#privacy-tool</code> <code>#gdpr-compliance</code> <code>#data-protection</code> <code>#sensitive-data</code> <code>#ocr</code> <code>#nlp</code> <code>#electron-app</code> <code>#open-source</code> <code>#offline-first</code>
+  <code>#pii-detection</code> <code>#data-masking</code> <code>#document-redaction</code> <code>#privacy-tool</code> <code>#gdpr-compliance</code> <code>#data-protection</code> <code>#sensitive-data</code> <code>#ocr</code> <code>#nlp</code> <code>#electron-app</code> <code>#web-app</code> <code>#open-source</code> <code>#offline-first</code>
 </p>
 
 ---
@@ -36,6 +37,20 @@
 <p align="center">
   <img src="screenshots/demo.gif" alt="maskr demo" width="800">
 </p>
+
+## Try Online
+
+**No installation required!** Try maskr directly in your browser:
+
+<p align="center">
+  <a href="https://iyassr.github.io/maskr/app/"><img src="https://img.shields.io/badge/Try%20maskr-Online-blue?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Try Online"></a>
+</p>
+
+The web version runs 100% client-side in your browser - no data is sent to any server. It supports:
+- Direct text input for quick sanitization
+- File upload (TXT, MD, JSON, CSV, HTML, DOCX, XLSX, PDF)
+- Image OCR (PNG, JPG, WebP)
+- All 23 entity detection types (names, emails, phones, credit cards, IBANs, SSNs, passports, and more)
 
 ## Why maskr?
 

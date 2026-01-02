@@ -1,13 +1,14 @@
 # Claude Code Instructions for maskr
 
 ## Project Overview
-maskr is an Electron desktop app for detecting and masking sensitive information in documents. Built with React 19, TypeScript, Vite 7, and Electron 39.
+maskr is an Electron desktop app + browser web app for detecting and masking sensitive information in documents. Built with React 19, TypeScript, Vite 7, and Electron 39.
 
 - **Owner**: iYassr (GitHub)
 - **Repo**: https://github.com/iYassr/maskr
 - **License**: MIT
 - **Current Version**: 1.3.15
 - **Landing Page**: https://maskr.pages.dev (Cloudflare Pages)
+- **Web App**: https://iyassr.github.io/maskr/app/ (GitHub Pages)
 - **GitHub Pages**: https://iyassr.github.io/maskr/
 
 ## Detection Capabilities (30+ Entity Types)
@@ -65,6 +66,11 @@ git add -A && git commit -m "message" && git push origin main
 ### "deploy landing page"
 ```bash
 npx wrangler pages deploy docs --project-name=maskr
+```
+
+### "test web app"
+```bash
+npx playwright test tests/web-app.spec.ts tests/web-app-comprehensive.spec.ts
 ```
 
 ## Known Issues
@@ -128,6 +134,8 @@ gh release create vX.Y.Z --title "maskr vX.Y.Z - Title" --notes "..." file1 file
 - `tests/comprehensive.spec.ts` - Extended tests (13 tests)
 - `tests/all-formats.spec.ts` - Format-specific tests (12 tests)
 - `tests/binary-formats.spec.ts` - DOCX/XLSX/PDF tests (6 tests)
+- `tests/web-app.spec.ts` - Web app tests (19 tests)
+- `tests/web-app-comprehensive.spec.ts` - Web app comprehensive PII test
 - `tests/fixtures/comprehensive-pii-sample.txt` - 700+ PII items for detection testing
 
 ### Running Tests
@@ -162,8 +170,10 @@ These are marked as external in `vite.config.ts` and must be available at runtim
 │   │   ├── ReviewStep.tsx    # Detection review table
 │   │   └── ExportStep.tsx    # Export sanitized document + back button
 │   └── stores/         # Zustand state management
-├── docs/               # Landing page (deployed to Cloudflare Pages)
+├── docs/               # Landing page + Web app (GitHub Pages)
 │   ├── index.html      # SEO-optimized landing page
+│   ├── app/            # Browser-based web app (standalone)
+│   │   └── index.html  # Complete web app (23 detectors, all formats)
 │   └── assets/         # Screenshots, demo GIF, favicon
 ├── tests/              # Playwright E2E tests
 │   └── fixtures/       # Test data including comprehensive PII sample
@@ -181,6 +191,7 @@ These are marked as external in `vite.config.ts` and must be available at runtim
 - `src/components/UploadStep.tsx` - Handles both file upload AND direct text input
 - `src/App.tsx` - Loading screen, step navigation
 - `docs/index.html` - Landing page with SEO meta tags
+- `docs/app/index.html` - Browser web app (23 detectors, CDN libraries)
 - `vite.config.ts` - Build config, lists external dependencies
 - `electron-builder.yml` - Package naming, build targets
 
@@ -190,10 +201,11 @@ These are marked as external in `vite.config.ts` and must be available at runtim
 
 ## Hosting
 - **Landing Page**: Cloudflare Pages (https://maskr.pages.dev)
+- **Web App**: GitHub Pages (https://iyassr.github.io/maskr/app/)
 - **Releases**: GitHub Releases
 - **Source**: GitHub (https://github.com/iYassr/maskr)
 
-### Deploy Landing Page
+### Deploy Landing Page (Cloudflare)
 ```bash
 # Login (one-time)
 npx wrangler login
@@ -201,6 +213,10 @@ npx wrangler login
 # Deploy
 npx wrangler pages deploy docs --project-name=maskr
 ```
+
+### Deploy Web App (GitHub Pages)
+Web app is deployed automatically when pushing to main branch via GitHub Pages.
+The `docs/` folder is served at https://iyassr.github.io/maskr/
 
 ## Windows Testing
 Common Windows-specific issues to watch for:
@@ -219,3 +235,5 @@ Common Windows-specific issues to watch for:
 5. **Don't restart dev server repeatedly** - If something's broken, rebuild first
 6. **Mada cards need BIN bypass** - Official Mada BINs skip Luhn validation
 7. **Gulf IBANs trust format** - SA/AE/etc IBANs don't require Mod97 checksum
+8. **Web app uses window.nlp** - Browser global, not module import
+9. **Escape HTML in placeholders** - `<EMAIL_1>` renders as HTML without escaping
