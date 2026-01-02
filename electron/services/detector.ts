@@ -45,7 +45,7 @@ export interface NEREntity {
   /** The detected text content */
   text: string
   /** Entity type classification */
-  type: 'person' | 'financial' | 'credit_card' | 'iban' | 'phone' | 'email' | 'ip' | 'url' | 'domain' | 'saudi_id' | 'ssn' | 'passport' | 'dob' | 'mac_address' | 'api_key' | 'license_plate' | 'medical_record' | 'drivers_license' | 'gps' | 'vin' | 'company_code'
+  type: 'person' | 'financial' | 'credit_card' | 'iban' | 'phone' | 'email' | 'ip' | 'url' | 'domain' | 'saudi_id' | 'ssn' | 'passport' | 'dob' | 'mac_address' | 'api_key' | 'license_plate' | 'medical_record' | 'drivers_license' | 'gps' | 'vin' | 'company_code' | 'address'
   /** Start position in source text (0-indexed) */
   start: number
   /** End position in source text (exclusive) */
@@ -251,6 +251,11 @@ export async function extractEntities(text: string, userCustomNames?: string[]):
   before = countBefore()
   detectCompanyCodes(text, addEntity)
   logDebug('Company codes detection complete', { found: entities.length - before })
+
+  // 23. Extract addresses (with explicit context only)
+  before = countBefore()
+  detectAddresses(text, addEntity)
+  logDebug('Addresses detection complete', { found: entities.length - before })
 
   // Deduplicate entities (same position)
   const seen = new Set<string>()
@@ -1577,6 +1582,70 @@ function detectCompanyCodes(
         type: 'company_code',
         start: match.index,
         end: match.index + codeText.length,
+        confidence: 90
+      })
+    }
+  }
+}
+
+/**
+ * Detects addresses with explicit context keywords (conservative approach).
+ * Only detects addresses that are explicitly labeled to minimize false positives.
+ *
+ * Supported contexts:
+ * - "Address:", "Shipping address:", "Billing address:"
+ * - "Ship to:", "Deliver to:", "Send to:"
+ * - "Location:", "Residence:", "Home:"
+ * - "P.O. Box", "PO Box"
+ *
+ * @internal
+ */
+function detectAddresses(
+  text: string,
+  addEntity: (entity: NEREntity) => void
+): void {
+  // Context patterns that indicate an address follows
+  const addressContextPatterns = [
+    // Explicit address labels - capture until end of line or next label
+    /\b(?:address|mailing\s+address|shipping\s+address|billing\s+address|home\s+address|work\s+address|street\s+address|physical\s+address|postal\s+address|residential\s+address)[:\s]+([^\n\r]{10,100})/gi,
+    // Ship to / Deliver to patterns
+    /\b(?:ship\s+to|deliver\s+to|send\s+to|mail\s+to)[:\s]+([^\n\r]{10,100})/gi,
+    // Location patterns
+    /\b(?:location|residence|domicile)[:\s]+([^\n\r]{10,100})/gi,
+    // P.O. Box patterns (very common in Saudi/GCC)
+    /\b(P\.?O\.?\s*Box\s+\d+(?:[,\s]+[A-Za-z\s]+)?(?:[,\s]+\d{5})?)/gi,
+    // Saudi/GCC format with building/street
+    /\b(?:عنوان|العنوان)[:\s]+([^\n\r]{10,100})/g,
+  ]
+
+  for (const pattern of addressContextPatterns) {
+    pattern.lastIndex = 0
+    let match: RegExpExecArray | null
+    while ((match = pattern.exec(text)) !== null) {
+      // Get the captured address part or full match for P.O. Box
+      let addressText = (match[1] || match[0]).trim()
+
+      // Clean up trailing punctuation and common end markers
+      addressText = addressText
+        .replace(/[,;.]+$/, '')
+        .replace(/\s+(phone|tel|fax|email|contact|mobile).*$/i, '')
+        .trim()
+
+      // Skip if too short (likely not a real address)
+      if (addressText.length < 10) continue
+
+      // Skip if it looks like just a name or single word
+      if (!/\d/.test(addressText) && addressText.split(/\s+/).length < 3) continue
+
+      // Find actual position of address text in the match
+      const addressStart = match[0].indexOf(addressText)
+      const start = match.index + (addressStart >= 0 ? addressStart : 0)
+
+      addEntity({
+        text: addressText,
+        type: 'address',
+        start: start,
+        end: start + addressText.length,
         confidence: 90
       })
     }

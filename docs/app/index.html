@@ -1270,6 +1270,44 @@
         }
       }
 
+      // 24. Addresses (with explicit context only - conservative approach)
+      const addressPatterns = [
+        // Explicit address labels
+        /\b(?:address|mailing\s+address|shipping\s+address|billing\s+address|home\s+address|work\s+address|street\s+address|physical\s+address|postal\s+address)[:\s]+([^\n\r]{10,100})/gi,
+        // Ship to / Deliver to patterns
+        /\b(?:ship\s+to|deliver\s+to|send\s+to|mail\s+to)[:\s]+([^\n\r]{10,100})/gi,
+        // Location patterns
+        /\b(?:location|residence)[:\s]+([^\n\r]{10,100})/gi,
+        // P.O. Box patterns
+        /\b(P\.?O\.?\s*Box\s+\d+(?:[,\s]+[A-Za-z\s]+)?(?:[,\s]+\d{5})?)/gi,
+        // Arabic address label
+        /\b(?:عنوان|العنوان)[:\s]+([^\n\r]{10,100})/g
+      ];
+      for (const pattern of addressPatterns) {
+        pattern.lastIndex = 0;
+        while ((match = pattern.exec(text)) !== null) {
+          let addressText = (match[1] || match[0]).trim();
+          // Clean up
+          addressText = addressText
+            .replace(/[,;.]+$/, '')
+            .replace(/\s+(phone|tel|fax|email|contact|mobile).*$/i, '')
+            .trim();
+          // Skip if too short or no number and less than 3 words
+          if (addressText.length < 10) continue;
+          if (!/\d/.test(addressText) && addressText.split(/\s+/).length < 3) continue;
+
+          const addressStart = match[0].indexOf(addressText);
+          const start = match.index + (addressStart >= 0 ? addressStart : 0);
+          addEntity({
+            text: addressText,
+            type: 'address',
+            start: start,
+            end: start + addressText.length,
+            confidence: 90
+          });
+        }
+      }
+
       return entities.sort((a, b) => a.start - b.start);
     }
 

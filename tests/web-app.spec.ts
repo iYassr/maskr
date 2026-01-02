@@ -287,4 +287,27 @@ test.describe('Web App - Browser Version', () => {
     await expect(table).toContainText('iban')
     await expect(table).toContainText('financial')
   })
+
+  test('detects addresses with explicit context', async ({ page }) => {
+    await page.click('#toggleTextInput')
+    await page.fill('#textInput', 'Address: 123 Main Street, Boston, MA 02101')
+    await page.click('#analyzeTextBtn')
+
+    await page.waitForSelector('#step2:not(.hidden)', { timeout: 10000 })
+
+    const table = page.locator('#detectionTable')
+    await expect(table).toContainText('address')
+    await expect(table).toContainText('123 Main Street')
+  })
+
+  test('detects P.O. Box addresses', async ({ page }) => {
+    await page.click('#toggleTextInput')
+    await page.fill('#textInput', 'Send mail to P.O. Box 12345, Riyadh')
+    await page.click('#analyzeTextBtn')
+
+    await page.waitForSelector('#step2:not(.hidden)', { timeout: 10000 })
+
+    const table = page.locator('#detectionTable')
+    await expect(table).toContainText('P.O. Box 12345')
+  })
 })
