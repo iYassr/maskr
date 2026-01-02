@@ -212,14 +212,9 @@ test.describe('Web App - Browser Version', () => {
 
     await page.waitForSelector('#step2:not(.hidden)', { timeout: 10000 })
 
-    // Toggle off the detection by unchecking the checkbox via JS
-    await page.evaluate(() => {
-      const checkbox = document.querySelector('#detectionTable input[type="checkbox"]') as HTMLInputElement
-      if (checkbox) {
-        checkbox.checked = false
-        checkbox.dispatchEvent(new Event('change', { bubbles: true }))
-      }
-    })
+    // Toggle off the detection by clicking the checkbox
+    const checkbox = page.locator('#detectionTable .checkbox').first()
+    await checkbox.click()
 
     // Continue to export
     await page.click('#continueToExport')
